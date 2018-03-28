@@ -31,7 +31,7 @@ Requires Kubernetes 1.9 or later.
 
 To use the Docker backend, you need to have Docker installed on the nodes.
 
-## Installation
+### Installation
 
 ```
 $ ./hack/build/build-push-apply.sh your-registry.example.com:5000/cbi test20180501
@@ -47,7 +47,7 @@ This command performs:
     * `Deployment`: `cbid-deployment`, ...
 * Execute `kubectl apply -f artifacts/cbi.generated.sh`.
 
-## Run your first `buildjob`
+### Run your first `buildjob`
 
 Create a buildjob `ex0` from [`artifacts/examples/ex0.yaml`](artifacts/examples/ex0.yaml):
 ```console
@@ -80,7 +80,7 @@ $ kubectl delete buildjobs ex0
 buildjob "ex0" deleted
 ```
 
-## Advanced usage
+### Advanced usage
 
 To send a large build context using [BuildKit session gRPC](https://github.com/moby/buildkit/blob/9f6d9a9e78f18b2ffc6bc4f211092722685cc853/session/filesync/filesync.proto), with support for diffcopy (*UNIMPLEMENTED YET*):
 
