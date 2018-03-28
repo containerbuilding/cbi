@@ -1,0 +1,11 @@
+DIND_CLUSTER_SH_URL=https://raw.githubusercontent.com/AkihiroSuda/kubeadm-dind-cluster/3a07ca3b72d95b4b4f62b39e7f58591a8799f660/fixed/dind-cluster-v1.9.sh
+DIND_CLUSTER_SH=/tmp/dind-cluster-v1.9.sh
+
+# hardcoded in DIND_CLUSTER_SH
+DIND_NET=kubeadm-dind-net
+
+CBI_REGISTRY=cbi-registry
+CBI_REGISTRY_IMAGE=registry:2
+CBI_BOOTSTRAP_DOCKER=cbi-bootstrap-docker
+CBI_BOOTSTRAP_DOCKER_IMAGE=docker:stable-dind
+CBI_BOOTSTRAP_DOCKER_EXPOSE=2375

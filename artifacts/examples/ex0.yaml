@@ -1,0 +1,13 @@
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex0
+spec:
+  image: example.com/akihirosuda/fowaadaa
+  push: false
+  language:
+    kind: Dockerfile
+  context:
+    kind: Git
+    gitRef:
+      url: git://github.com/AkihiroSuda/fowaadaa
