@@ -136,10 +136,10 @@ You may use `hack/dind/up.sh` for setting up a local Kubernetes cluster and a lo
 
 ```console
 $ ./hack/dind/up.sh
-$ DOCKER_HOST=localhost:2375 ./hack/build/build-push-apply.sh cbi-registry:5000/cbi test20180501
+$ DOCKER_HOST=localhost:62375 ./hack/build/build-push-apply.sh cbi-registry:5000/cbi test20180501
 $ ./hack/dind/down.sh
 ```
-The Kubernetes cluster and the "bootstrap" Docker listening at `localhost:2375` can connect to `cbi-registry:5000` without auth.
+The Kubernetes cluster and the "bootstrap" Docker listening at `localhost:62375` can connect to `cbi-registry:5000` without auth.
 
 
 ## FAQs
