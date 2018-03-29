@@ -22,8 +22,10 @@ fi
 cd $(dirname $0)/../..
 
 # Build images
-docker build -t ${REGISTRY}/cbid:${TAG} -f artifacts/Dockerfile.cbid .
-docker push ${REGISTRY}/cbid:${TAG}
+for t in cbid cbi-dockercli; do
+  docker build -t ${REGISTRY}/${t}:${TAG} --target ${t} -f artifacts/Dockerfile .
+  docker push ${REGISTRY}/${t}:${TAG}
+done
 
 # Generate and apply the manifest
 ./artifacts/cbi.yaml.sh ${REGISTRY} ${TAG}
