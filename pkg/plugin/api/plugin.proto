@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package cbi.plugin.v1;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.sizer_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+service Plugin {
+	rpc Info(InfoRequest) returns (InfoResponse);
+	rpc Build(BuildRequest) returns (BuildResponse);
+}
+
+message InfoRequest {
+}
+
+message InfoResponse {
+	// Supported values for CBI CRD BuildJob.Spec.Language.Kind
+	repeated string supported_language_kind = 1;
+	// Supported values for CBI CRD BuildJob.Spec.Context.Kind
+  repeated string supported_context_kind = 2;
+}
+
+message BuildRequest {
+	// JSON representation of CBI CRD BuildJob
+	string build_job_json = 1;
+}
+
+message BuildResponse {
+	// Name of the newly created Kubernetes Job object
+	string job_name = 1;
+}
