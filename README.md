@@ -12,7 +12,7 @@ with support for several backends such as [Docker](https://www.docker.com), [img
 
 ### Implementation
 
-* CBI daemon (CBID): pre-alpha, see [`cmd/cbid`](cmd/cbid).
+* CBI controller daemon (`cbid`): pre-alpha, see [`cmd/cbid`](cmd/cbid).
 
 * Plugins (all of them are pre-alpha or even hasn't been started to work on):
 
@@ -44,13 +44,13 @@ $ ./hack/build/build-push-apply.sh your-registry.example.com:5000/cbi test201805
 
 This command performs:
 
-* Build and push CBI images as `your-registry.example.com:5000/cbi/...:test20180501`
-* Generate `artifacts/cbi.generated.sh` so that the manifest uses the images on `your-registry.example.com:5000/cbi/...:test20180501`.
+* Build and push CBI images as `your-registry.example.com:5000/cbi/{cbid,cbi-docker,...}:test20180501`
+* Generate `artifacts/cbi.generated.sh` so that the manifest uses the images on `your-registry.example.com:5000/cbi/{cbid,cbi-docker}:test20180501`.
     * `CustomResourceDefinition`: `BuildJob`
-    * `ServiceAccount`: `cbid-serviceaccount`, ....
-    * `ClusterRoleBinding`: `cbid-rbac`, ...
-    * `Deployment`: `cbid`, `cbi-dockercli`, ...
-* Execute `kubectl apply -f artifacts/cbi.generated.sh`.
+    * `ServiceAccount`: `cbi`
+    * `ClusterRoleBinding`: `cbi`
+    * `Deployment`: `cbid`, `cbi-docker`, ...
+* Execute `kubectl apply -f artifacts/cbi.generated.yaml`.
 
 ### Run your first `buildjob`
 
@@ -107,7 +107,7 @@ Specifications:
 
 Implementations:
 
-* CBI daemon (`cbid`): a controller that watches creation of CBI CRD objects and creates [Kubernetes Job](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#what-is-a-job) objects correspondingly.
+* CBI controller daemon (`cbid`): a controller that watches creation of CBI CRD objects and creates [Kubernetes Job](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#what-is-a-job) objects correspondingly.
 * CBI CLI (`cbictl`): a reference CLI implementation for `cbid`
 * CBI plugins: the actual pods that build and push images.
 * CBI session manager (`cbism`): pods that speak [BuildKit session gRPC](https://github.com/moby/buildkit/blob/9f6d9a9e78f18b2ffc6bc4f211092722685cc853/session/filesync/filesync.proto) (or other similar protocols) for supporting large build context and diffcopy.

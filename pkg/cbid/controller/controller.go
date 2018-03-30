@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package controller
 
 import (
 	"context"
@@ -37,8 +37,8 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/containerbuilding/cbi/cmd/cbid/pluginselector"
 	cbiv1alpha1 "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
+	"github.com/containerbuilding/cbi/pkg/cbid/pluginselector"
 	clientset "github.com/containerbuilding/cbi/pkg/client/clientset/versioned"
 	cbischeme "github.com/containerbuilding/cbi/pkg/client/clientset/versioned/scheme"
 	informers "github.com/containerbuilding/cbi/pkg/client/informers/externalversions"
@@ -65,10 +65,7 @@ const (
 
 // Controller is the controller implementation for BuildJob resources
 type Controller struct {
-	// kubeclientset is a standard kubernetes clientset
-	kubeclientset kubernetes.Interface
-	// cbiclientset is a clientset for our own API group
-	cbiclientset    clientset.Interface
+	opts            Opts
 	buildJobsLister listers.BuildJobLister
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
@@ -80,19 +77,20 @@ type Controller struct {
 	// recorder is an event recorder for recording Event resources to the
 	// Kubernetes API.
 	recorder record.EventRecorder
-
-	pluginselector *pluginselector.PluginSelector
 }
 
-// NewController returns a new CBI controller
-func NewController(
-	kubeclientset kubernetes.Interface,
-	cbiclientset clientset.Interface,
-	kubeInformerFactory kubeinformers.SharedInformerFactory,
-	cbiInformerFactory informers.SharedInformerFactory,
-	ps *pluginselector.PluginSelector) *Controller {
+// Opts for New
+type Opts struct {
+	KubeClientset       kubernetes.Interface
+	CBIClientset        clientset.Interface
+	KubeInformerFactory kubeinformers.SharedInformerFactory
+	CBIInformerFactory  informers.SharedInformerFactory
+	PluginSelector      *pluginselector.PluginSelector
+}
 
-	buildJobInformer := cbiInformerFactory.Cbi().V1alpha1().BuildJobs()
+// New returns a new CBI controller
+func New(opts Opts) *Controller {
+	buildJobInformer := opts.CBIInformerFactory.Cbi().V1alpha1().BuildJobs()
 
 	// Create event broadcaster
 	// Add CBI types to the default Kubernetes Scheme so Events can be
@@ -101,16 +99,14 @@ func NewController(
 	glog.V(4).Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: opts.KubeClientset.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
-		kubeclientset:   kubeclientset,
-		cbiclientset:    cbiclientset,
+		opts:            opts,
 		buildJobsLister: buildJobInformer.Lister(),
 		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "BuildJobs"),
 		recorder:        recorder,
-		pluginselector:  ps,
 	}
 
 	glog.Info("Setting up event handlers")
@@ -243,7 +239,7 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	// Resolve CBI plugin client
-	pluginClient := c.pluginselector.Select(*buildJob)
+	pluginClient := c.opts.PluginSelector.Select(*buildJob)
 	if pluginClient == nil {
 		runtime.HandleError(fmt.Errorf("%s: no plugin support this spec", key))
 		return nil
@@ -279,7 +275,7 @@ func (c *Controller) updateBuildJobStatus(buildJob *cbiv1alpha1.BuildJob, jobNam
 	// update the Status block of the BuildJob resource. UpdateStatus will not
 	// allow changes to the Spec of the resource, which is ideal for ensuring
 	// nothing other than resource status has been updated.
-	_, err := c.cbiclientset.CbiV1alpha1().BuildJobs(buildJob.Namespace).Update(buildJobCopy)
+	_, err := c.opts.CBIClientset.CbiV1alpha1().BuildJobs(buildJob.Namespace).Update(buildJobCopy)
 	return err
 }
 

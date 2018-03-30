@@ -32,16 +32,16 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: cbid-serviceaccount
+  name: cbi
   namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
-  name: cbid-rbac
+  name: cbi
 subjects:
   - kind: ServiceAccount
-    name: cbid-serviceaccount
+    name: cbi
     namespace: default
 roleRef:
   kind: ClusterRole
@@ -49,28 +49,28 @@ roleRef:
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
 ---
-## CBI plugin stuff (dockercli)
+## CBI plugin stuff (docker)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cbi-dockercli
+  name: cbi-docker
   labels:
-    app: cbi-dockercli
+    app: cbi-docker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cbi-dockercli
+      app: cbi-docker
   template:
     metadata:
       labels:
-        app: cbi-dockercli
+        app: cbi-docker
     spec:
-      serviceAccountName: cbid-serviceaccount
+      serviceAccountName: cbi
       containers:
-      - name: cbi-dockercli
-        image: ${REGISTRY}/cbi-dockercli:${TAG}
-        args: ["-v=4"]
+      - name: cbi-docker
+        image: ${REGISTRY}/cbi-docker:${TAG}
+        args: ["-logtostderr", "-v=4"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111
@@ -78,15 +78,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cbi-dockercli
+  name: cbi-docker
   labels:
-    app: cbi-dockercli
+    app: cbi-docker
 spec:
   ports:
   - port: 12111
     protocol: TCP
   selector:
-    app: cbi-dockercli
+    app: cbi-docker
 ---
 ## CBID stuff
 apiVersion: apps/v1
@@ -105,11 +105,11 @@ spec:
       labels:
         app: cbid
     spec:
-      serviceAccountName: cbid-serviceaccount
+      serviceAccountName: cbi
       containers:
       - name: cbid
         image: ${REGISTRY}/cbid:${TAG}
-        args: ["-v=4", "-cbi-plugins=cbi-dockercli"]
+        args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker"]
         imagePullPolicy: Always
 EOF
 echo "generated ${out}"

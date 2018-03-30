@@ -34,7 +34,8 @@ import (
 	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
-	"github.com/containerbuilding/cbi/cmd/cbid/pluginselector"
+	"github.com/containerbuilding/cbi/pkg/cbid/controller"
+	"github.com/containerbuilding/cbi/pkg/cbid/pluginselector"
 	clientset "github.com/containerbuilding/cbi/pkg/client/clientset/versioned"
 	informers "github.com/containerbuilding/cbi/pkg/client/informers/externalversions"
 	"github.com/containerbuilding/cbi/pkg/plugin"
@@ -93,7 +94,13 @@ func main() {
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	cbiInformerFactory := informers.NewSharedInformerFactory(cbiClient, time.Second*30)
 
-	controller := NewController(kubeClient, cbiClient, kubeInformerFactory, cbiInformerFactory, ps)
+	controller := controller.New(controller.Opts{
+		KubeClientset:       kubeClient,
+		CBIClientset:        cbiClient,
+		KubeInformerFactory: kubeInformerFactory,
+		CBIInformerFactory:  cbiInformerFactory,
+		PluginSelector:      ps,
+	})
 
 	go kubeInformerFactory.Start(stopCh)
 	go cbiInformerFactory.Start(stopCh)

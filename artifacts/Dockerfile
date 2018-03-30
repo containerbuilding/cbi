@@ -12,9 +12,9 @@ FROM base AS cbid
 COPY --from=compile /cbid /cbid
 ENTRYPOINT ["/cbid"]
 
-FROM base AS cbi-dockercli
-COPY --from=compile /cbi-dockercli /cbi-dockercli
-ENTRYPOINT ["/cbi-dockercli"]
+FROM base AS cbi-docker
+COPY --from=compile /cbi-docker /cbi-docker
+ENTRYPOINT ["/cbi-docker"]
 
 FROM alpine
 CMD echo 'nothing defined here, specify the target via `docker build --target`.'; false
