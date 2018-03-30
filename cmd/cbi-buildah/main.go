@@ -23,7 +23,7 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend/docker"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/backend/buildah"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/cmd"
 )
 
@@ -33,9 +33,19 @@ func main() {
 		// flag.CommandLine is associated with flag.ExitOnError
 		FlagSet: flag.CommandLine,
 		Args:    os.Args[1:],
-		CreateBackend: func() (backend.Backend, error) {
-			return &docker.Docker{}, nil
-		},
+	}
+	var (
+		image string
+	)
+	o.FlagSet.StringVar(&image, "buildah-image", "", "image used for running buildah job")
+	o.CreateBackend = func() (backend.Backend, error) {
+		if image == "" {
+			glog.Fatal("no buildah-image provided")
+		}
+		b := &buildah.Buildah{
+			Image: image,
+		}
+		return b, nil
 	}
 	if err := cmd.Main(o); err != nil {
 		glog.Fatal(err)
