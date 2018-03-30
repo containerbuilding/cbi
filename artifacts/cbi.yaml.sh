@@ -127,6 +127,85 @@ spec:
   selector:
     app: cbi-buildah
 ---
+## CBI plugin stuff (buildkit)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cbi-buildkit
+  labels:
+    app: cbi-buildkit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cbi-buildkit
+  template:
+    metadata:
+      labels:
+        app: cbi-buildkit
+    spec:
+      serviceAccountName: cbi
+      containers:
+      - name: cbi-buildkit
+        image: ${REGISTRY}/cbi-buildkit:${TAG}
+        args: ["-logtostderr", "-v=4", "-buildctl-image=tonistiigi/buildkit", "-buildkitd-addr=tcp://cbi-buildkit-buildkitd:1234"]
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 12111
+---
+apiVersion: apps/v1
+# TODO: workers should be StatefulSet
+kind: Deployment
+metadata:
+  name: cbi-buildkit-buildkitd
+  labels:
+    app: cbi-buildkit-buildkitd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cbi-buildkit-buildkitd
+  template:
+    metadata:
+      labels:
+        app: cbi-buildkit-buildkitd
+    spec:
+      containers:
+      - name: cbi-buildkit-buildkitd
+        image: tonistiigi/buildkit
+        args: ["--oci-worker-snapshotter", "naive", "--addr", "tcp://0.0.0.0:1234"]
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 1234
+        securityContext:
+          privileged: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cbi-buildkit
+  labels:
+    app: cbi-buildkit
+spec:
+  ports:
+  - port: 12111
+    protocol: TCP
+  selector:
+    app: cbi-buildkit
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cbi-buildkit-buildkitd
+  labels:
+    app: cbi-buildkit-buildkitd
+spec:
+  ports:
+  - port: 1234
+    protocol: TCP
+  selector:
+    app: cbi-buildkit-buildkitd
+---
 ## CBID stuff
 apiVersion: apps/v1
 kind: Deployment
@@ -148,7 +227,7 @@ spec:
       containers:
       - name: cbid
         image: ${REGISTRY}/cbid:${TAG}
-        args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker,cbi-buildah"]
+        args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker,cbi-buildah,cbi-buildkit"]
         imagePullPolicy: Always
 EOF
 echo "generated ${out}"

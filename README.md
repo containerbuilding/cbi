@@ -20,7 +20,7 @@ Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 --- | --- | --- | ---
 [Docker](https://www.docker.com) | Yes | |
 [img](https://github.com/genuinetools/img) | Planned | |
-[BuildKit](https://github.com/moby/buildkit) | Planned | Planned | Planned
+[BuildKit](https://github.com/moby/buildkit) | Yes | Planned | Planned
 [Buildah](https://github.com/projectatomic/buildah) | Yes | |
 [OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | |
 [Orca](https://github.com/cyphar/orca-build) | Planned | |
@@ -55,6 +55,8 @@ By default, the following plugins will be installed:
 * Docker (Default)
     * requires Docker to be installed on the hosts
 * Buildah
+    * requires privileged containers to be enabled
+* BuildKit
     * requires privileged containers to be enabled
 
 You may execute `kubectl edit deployment cbid` to remove unneeded plugins or change the default one.

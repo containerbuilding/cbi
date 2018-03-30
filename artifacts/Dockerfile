@@ -23,5 +23,9 @@ ENTRYPOINT ["/cbi-buildah"]
 FROM fedora:rawhide AS cbi-buildah-buildah
 RUN dnf install -y git buildah && dnf clean all
 
+FROM base AS cbi-buildkit
+COPY --from=compile /cbi-buildkit /cbi-buildkit
+ENTRYPOINT ["/cbi-buildkit"]
+
 FROM alpine
 CMD echo 'nothing defined here, specify the target via `docker build --target`.'; false
