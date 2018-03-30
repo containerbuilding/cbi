@@ -22,7 +22,7 @@ fi
 cd $(dirname $0)/../..
 
 # Build images
-for t in cbid cbi-dockercli; do
+for t in cbid cbi-docker; do
   docker build -t ${REGISTRY}/${t}:${TAG} --target ${t} -f artifacts/Dockerfile .
   docker push ${REGISTRY}/${t}:${TAG}
 done

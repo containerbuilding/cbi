@@ -22,16 +22,17 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containerbuilding/cbi/cmd/cbi-dockercli/backend"
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	api "github.com/containerbuilding/cbi/pkg/plugin/api"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
 	"google.golang.org/grpc"
 	"k8s.io/client-go/kubernetes"
 )
 
 type Service struct {
-	KubeClient *kubernetes.Clientset
-	Port       int
+	Backend       backend.Backend
+	KubeClientset *kubernetes.Clientset
+	Port          int
 }
 
 func (s *Service) Serve() error {
@@ -40,7 +41,7 @@ func (s *Service) Serve() error {
 		return err
 	}
 	ps := &PluginServer{
-		Service: s,
+		s: s,
 	}
 	gs := grpc.NewServer()
 	api.RegisterPluginServer(gs, ps)
@@ -48,19 +49,11 @@ func (s *Service) Serve() error {
 }
 
 type PluginServer struct {
-	*Service
+	s *Service
 }
 
 func (ps *PluginServer) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error) {
-	res := &api.InfoResponse{
-		SupportedLanguageKind: []string{
-			crd.LanguageKindDockerfile,
-		},
-		SupportedContextKind: []string{
-			crd.ContextKindGit,
-		},
-	}
-	return res, nil
+	return ps.s.Backend.Info(ctx, req)
 }
 
 func (ps *PluginServer) Build(ctx context.Context, req *api.BuildRequest) (*api.BuildResponse, error) {
@@ -68,13 +61,13 @@ func (ps *PluginServer) Build(ctx context.Context, req *api.BuildRequest) (*api.
 	if err := json.Unmarshal([]byte(req.BuildJobJson), &buildJob); err != nil {
 		return nil, err
 	}
-	jn := jobName(&buildJob)
-	jobManifest, err := backend.NewDockerJob(jn, &buildJob)
+	jn := jobName(buildJob)
+	jobManifest, err := ps.s.Backend.CreateJobManifest(ctx, jn, buildJob)
 	if err != nil {
 		return nil, err
 	}
 	// FIXME(AkihiroSuda): update the job if already exists
-	_, err = ps.KubeClient.BatchV1().Jobs(buildJob.Namespace).Create(jobManifest)
+	_, err = ps.s.KubeClientset.BatchV1().Jobs(buildJob.Namespace).Create(jobManifest)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +77,6 @@ func (ps *PluginServer) Build(ctx context.Context, req *api.BuildRequest) (*api.
 	return res, nil
 }
 
-func jobName(buildJob *crd.BuildJob) string {
+func jobName(buildJob crd.BuildJob) string {
 	return buildJob.Name + "-job"
 }

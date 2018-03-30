@@ -14,27 +14,47 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package backend
+package docker
 
 import (
+	"context"
 	"fmt"
 
-	cbiv1alpha1 "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
+	pluginapi "github.com/containerbuilding/cbi/pkg/plugin/api"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
 )
 
-// NewDockerJob creates a new Job for a BuildJob resource.
-func NewDockerJob(jobName string, buildJob *cbiv1alpha1.BuildJob) (*batchv1.Job, error) {
+type Docker struct {
+}
+
+var _ backend.Backend = &Docker{}
+
+func (b *Docker) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
+	res := &pluginapi.InfoResponse{
+		SupportedLanguageKind: []string{
+			crd.LanguageKindDockerfile,
+		},
+		SupportedContextKind: []string{
+			crd.ContextKindGit,
+		},
+	}
+	return res, nil
+}
+
+func (b *Docker) CreateJobManifest(ctx context.Context, jobName string, buildJob crd.BuildJob) (*batchv1.Job, error) {
 	if buildJob.Spec.Push {
 		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
 	}
-	if buildJob.Spec.Language.Kind != cbiv1alpha1.LanguageKindDockerfile {
+	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
 		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
 	}
-	if buildJob.Spec.Context.Kind != cbiv1alpha1.ContextKindGit {
+	if buildJob.Spec.Context.Kind != crd.ContextKindGit {
 		return nil, fmt.Errorf("unsupported Spec.Context: %v", buildJob.Spec.Context)
 	}
 
@@ -74,9 +94,9 @@ func NewDockerJob(jobName string, buildJob *cbiv1alpha1.BuildJob) (*batchv1.Job,
 			Name:      jobName,
 			Namespace: buildJob.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(buildJob, schema.GroupVersionKind{
-					Group:   cbiv1alpha1.SchemeGroupVersion.Group,
-					Version: cbiv1alpha1.SchemeGroupVersion.Version,
+				*metav1.NewControllerRef(&buildJob, schema.GroupVersionKind{
+					Group:   crd.SchemeGroupVersion.Group,
+					Version: crd.SchemeGroupVersion.Version,
 					Kind:    "BuildJob",
 				}),
 			},

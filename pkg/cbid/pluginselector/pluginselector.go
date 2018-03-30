@@ -21,9 +21,10 @@ import (
 	"fmt"
 	"strings"
 
+	"google.golang.org/grpc"
+
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	api "github.com/containerbuilding/cbi/pkg/plugin/api"
-	"google.golang.org/grpc"
 )
 
 type PluginSelectorFunc func(plugins []api.InfoResponse, bj crd.BuildJob) int
