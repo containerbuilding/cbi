@@ -16,5 +16,12 @@ FROM base AS cbi-docker
 COPY --from=compile /cbi-docker /cbi-docker
 ENTRYPOINT ["/cbi-docker"]
 
+FROM base AS cbi-buildah
+COPY --from=compile /cbi-buildah /cbi-buildah
+ENTRYPOINT ["/cbi-buildah"]
+
+FROM fedora:rawhide AS cbi-buildah-buildah
+RUN dnf install -y git buildah && dnf clean all
+
 FROM alpine
 CMD echo 'nothing defined here, specify the target via `docker build --target`.'; false

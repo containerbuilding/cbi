@@ -33,7 +33,8 @@ import (
 type Opts struct {
 	FlagSet *flag.FlagSet
 	Args    []string
-	Backend backend.Backend
+	// CreateBackend is called after calling o.FlagSet.Parse(o.Args).
+	CreateBackend func() (backend.Backend, error)
 }
 
 func Main(o Opts) error {
@@ -48,6 +49,10 @@ func Main(o Opts) error {
 	if err := o.FlagSet.Parse(o.Args); err != nil {
 		return err
 	}
+	b, err := o.CreateBackend()
+	if err != nil {
+		return err
+	}
 
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
@@ -60,7 +65,7 @@ func Main(o Opts) error {
 	}
 
 	s := &service.Service{
-		Backend:       o.Backend,
+		Backend:       b,
 		KubeClientset: kubeClientset,
 		Port:          port,
 	}

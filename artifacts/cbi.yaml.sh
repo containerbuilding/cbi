@@ -88,6 +88,45 @@ spec:
   selector:
     app: cbi-docker
 ---
+## CBI plugin stuff (buildah)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cbi-buildah
+  labels:
+    app: cbi-buildah
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cbi-buildah
+  template:
+    metadata:
+      labels:
+        app: cbi-buildah
+    spec:
+      serviceAccountName: cbi
+      containers:
+      - name: cbi-buildah
+        image: ${REGISTRY}/cbi-buildah:${TAG}
+        args: ["-logtostderr", "-v=4", "-buildah-image=${REGISTRY}/cbi-buildah-buildah:${TAG}"]
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 12111
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cbi-buildah
+  labels:
+    app: cbi-buildah
+spec:
+  ports:
+  - port: 12111
+    protocol: TCP
+  selector:
+    app: cbi-buildah
+---
 ## CBID stuff
 apiVersion: apps/v1
 kind: Deployment
@@ -109,7 +148,7 @@ spec:
       containers:
       - name: cbid
         image: ${REGISTRY}/cbid:${TAG}
-        args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker"]
+        args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker,cbi-buildah"]
         imagePullPolicy: Always
 EOF
 echo "generated ${out}"

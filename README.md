@@ -21,7 +21,7 @@ Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 [Docker](https://www.docker.com) | Yes | |
 [img](https://github.com/genuinetools/img) | Planned | |
 [BuildKit](https://github.com/moby/buildkit) | Planned | Planned | Planned
-[Buildah](https://github.com/projectatomic/buildah) | Planned | |
+[Buildah](https://github.com/projectatomic/buildah) | Yes | |
 [OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | |
 [Orca](https://github.com/cyphar/orca-build) | Planned | |
 [Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |
@@ -34,8 +34,6 @@ Please feel free to open PRs to add other plugins.
 
 Requires Kubernetes 1.9 or later.
 
-To use the Docker plugin, you need to have Docker installed on the nodes.
-
 ### Installation
 
 ```
@@ -45,12 +43,21 @@ $ ./hack/build/build-push-apply.sh your-registry.example.com:5000/cbi test201805
 This command performs:
 
 * Build and push CBI images as `your-registry.example.com:5000/cbi/{cbid,cbi-docker,...}:test20180501`
-* Generate `artifacts/cbi.generated.sh` so that the manifest uses the images on `your-registry.example.com:5000/cbi/{cbid,cbi-docker}:test20180501`.
+* Generate `artifacts/cbi.generated.sh` so that the manifest uses the images on `your-registry.example.com:5000/cbi/{cbid,cbi-docker,...}:test20180501`.
     * `CustomResourceDefinition`: `BuildJob`
     * `ServiceAccount`: `cbi`
     * `ClusterRoleBinding`: `cbi`
     * `Deployment`: `cbid`, `cbi-docker`, ...
 * Execute `kubectl apply -f artifacts/cbi.generated.yaml`.
+
+By default, the following plugins will be installed:
+
+* Docker (Default)
+    * requires Docker to be installed on the hosts
+* Buildah
+    * requires privileged containers to be enabled
+
+You may execute `kubectl edit deployment cbid` to remove unneeded plugins or change the default one.
 
 ### Run your first `buildjob`
 
@@ -87,7 +94,25 @@ buildjob "ex0" deleted
 
 ### Advanced usage
 
-To send a large build context using [BuildKit session gRPC](https://github.com/moby/buildkit/blob/9f6d9a9e78f18b2ffc6bc4f211092722685cc853/session/filesync/filesync.proto), with support for diffcopy (*UNIMPLEMENTED YET*):
+#### Specifying plugin (*UNIMPLEMENTED YET*):
+
+Specify the `pluginSelector` constraint as follows:
+
+```yaml
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex0
+  ...
+spec:
+  pluginSelector:
+    kind: Buildah
+  ...
+```
+
+#### Large context  (*UNIMPLEMENTED YET*):
+
+To send a large build context using [BuildKit session gRPC](https://github.com/moby/buildkit/blob/9f6d9a9e78f18b2ffc6bc4f211092722685cc853/session/filesync/filesync.proto), with support for diffcopy
 
 ```console
 $ go get github.com/containerbuilding/cbi/cmd/cbictl
