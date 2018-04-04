@@ -66,7 +66,6 @@ spec:
       labels:
         app: cbi-docker
     spec:
-      serviceAccountName: cbi
       containers:
       - name: cbi-docker
         image: ${REGISTRY}/cbi-docker:${TAG}
@@ -105,7 +104,6 @@ spec:
       labels:
         app: cbi-buildah
     spec:
-      serviceAccountName: cbi
       containers:
       - name: cbi-buildah
         image: ${REGISTRY}/cbi-buildah:${TAG}
@@ -144,7 +142,6 @@ spec:
       labels:
         app: cbi-buildkit
     spec:
-      serviceAccountName: cbi
       containers:
       - name: cbi-buildkit
         image: ${REGISTRY}/cbi-buildkit:${TAG}
