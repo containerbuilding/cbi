@@ -20,11 +20,6 @@ import (
 	"flag"
 	"fmt"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
-	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-
 	"github.com/containerbuilding/cbi/pkg/plugin"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/service"
@@ -39,12 +34,8 @@ type Opts struct {
 
 func Main(o Opts) error {
 	var (
-		masterURL  string
-		kubeconfig string
-		port       int
+		port int
 	)
-	o.FlagSet.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
-	o.FlagSet.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	o.FlagSet.IntVar(&port, "cbi-plugin-port", plugin.DefaultPort, "Port for listening CBI Plugin gRPC API")
 	if err := o.FlagSet.Parse(o.Args); err != nil {
 		return err
@@ -53,23 +44,10 @@ func Main(o Opts) error {
 	if err != nil {
 		return err
 	}
-
-	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
-	if err != nil {
-		return fmt.Errorf("Error building kubeconfig: %s", err.Error())
-	}
-
-	kubeClientset, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("Error building kubernetes clientset: %s", err.Error())
-	}
-
 	s := &service.Service{
-		Backend:       b,
-		KubeClientset: kubeClientset,
-		Port:          port,
+		Backend: b,
 	}
-	if err := s.Serve(); err != nil {
+	if err := service.ServeTCP(s, port); err != nil {
 		return fmt.Errorf("Error serving CBI plugin API: %s", err.Error())
 	}
 	return nil

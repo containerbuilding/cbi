@@ -10,7 +10,7 @@ option (gogoproto.unmarshaler_all) = true;
 
 service Plugin {
 	rpc Info(InfoRequest) returns (InfoResponse);
-	rpc Build(BuildRequest) returns (BuildResponse);
+	rpc Spec(SpecRequest) returns (SpecResponse);
 }
 
 message InfoRequest {
@@ -23,12 +23,12 @@ message InfoResponse {
   repeated string supported_context_kind = 2;
 }
 
-message BuildRequest {
+message SpecRequest {
 	// JSON representation of CBI CRD BuildJob
-	string build_job_json = 1;
+	bytes build_job_json = 1;
 }
 
-message BuildResponse {
-	// Name of the newly created Kubernetes Job object
-	string job_name = 1;
+message SpecResponse {
+	// JSON representation of Kubernetes PodTemplateSpec
+	bytes pod_template_spec_json = 1;
 }

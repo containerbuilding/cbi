@@ -19,7 +19,7 @@ package backend
 import (
 	"context"
 
-	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	api "github.com/containerbuilding/cbi/pkg/plugin/api"
@@ -27,5 +27,5 @@ import (
 
 type Backend interface {
 	Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error)
-	CreateJobManifest(ctx context.Context, jobName string, bj crd.BuildJob) (*batchv1.Job, error)
+	CreatePodTemplateSpec(ctx context.Context, bj crd.BuildJob) (*corev1.PodTemplateSpec, error)
 }

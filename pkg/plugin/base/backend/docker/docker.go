@@ -20,10 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	pluginapi "github.com/containerbuilding/cbi/pkg/plugin/api"
@@ -47,7 +44,7 @@ func (b *Docker) Info(ctx context.Context, req *pluginapi.InfoRequest) (*plugina
 	return res, nil
 }
 
-func (b *Docker) CreateJobManifest(ctx context.Context, jobName string, buildJob crd.BuildJob) (*batchv1.Job, error) {
+func (b *Docker) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
 	if buildJob.Spec.Push {
 		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
 	}
@@ -59,6 +56,7 @@ func (b *Docker) CreateJobManifest(ctx context.Context, jobName string, buildJob
 	}
 
 	hostPathFile := corev1.HostPathFile
+	// TODO(AkihiroSuda): support NodeSelector
 	podSpec := corev1.PodSpec{
 		RestartPolicy: corev1.RestartPolicyNever,
 		Containers: []corev1.Container{
@@ -89,22 +87,7 @@ func (b *Docker) CreateJobManifest(ctx context.Context, jobName string, buildJob
 			},
 		},
 	}
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
-			Namespace: buildJob.Namespace,
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(&buildJob, schema.GroupVersionKind{
-					Group:   crd.SchemeGroupVersion.Group,
-					Version: crd.SchemeGroupVersion.Version,
-					Kind:    "BuildJob",
-				}),
-			},
-		},
-		Spec: batchv1.JobSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: podSpec,
-			},
-		},
+	return &corev1.PodTemplateSpec{
+		Spec: podSpec,
 	}, nil
 }
