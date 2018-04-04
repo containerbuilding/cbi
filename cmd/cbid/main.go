@@ -94,13 +94,12 @@ func main() {
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	cbiInformerFactory := informers.NewSharedInformerFactory(cbiClient, time.Second*30)
 
-	controller := controller.New(controller.Opts{
-		KubeClientset:       kubeClient,
-		CBIClientset:        cbiClient,
-		KubeInformerFactory: kubeInformerFactory,
-		CBIInformerFactory:  cbiInformerFactory,
-		PluginSelector:      ps,
-	})
+	controller := controller.New(
+		kubeClient,
+		cbiClient,
+		kubeInformerFactory,
+		cbiInformerFactory,
+		ps)
 
 	go kubeInformerFactory.Start(stopCh)
 	go cbiInformerFactory.Start(stopCh)

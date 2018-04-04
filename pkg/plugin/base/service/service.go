@@ -22,61 +22,48 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/golang/glog"
+	"google.golang.org/grpc"
+
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	api "github.com/containerbuilding/cbi/pkg/plugin/api"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
-	"google.golang.org/grpc"
-	"k8s.io/client-go/kubernetes"
 )
 
 type Service struct {
-	Backend       backend.Backend
-	KubeClientset *kubernetes.Clientset
-	Port          int
+	Backend backend.Backend
 }
 
-func (s *Service) Serve() error {
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", s.Port))
+func ServeTCP(s *Service, port int) error {
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return err
 	}
-	ps := &PluginServer{
-		s: s,
-	}
+	glog.Infof("Using address %q", ln.Addr().String())
 	gs := grpc.NewServer()
-	api.RegisterPluginServer(gs, ps)
+	api.RegisterPluginServer(gs, s)
 	return gs.Serve(ln)
 }
 
-type PluginServer struct {
-	s *Service
+func (s *Service) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error) {
+	return s.Backend.Info(ctx, req)
 }
 
-func (ps *PluginServer) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error) {
-	return ps.s.Backend.Info(ctx, req)
-}
-
-func (ps *PluginServer) Build(ctx context.Context, req *api.BuildRequest) (*api.BuildResponse, error) {
+func (s *Service) Spec(ctx context.Context, req *api.SpecRequest) (*api.SpecResponse, error) {
 	var buildJob crd.BuildJob
-	if err := json.Unmarshal([]byte(req.BuildJobJson), &buildJob); err != nil {
+	if err := json.Unmarshal(req.BuildJobJson, &buildJob); err != nil {
 		return nil, err
 	}
-	jn := jobName(buildJob)
-	jobManifest, err := ps.s.Backend.CreateJobManifest(ctx, jn, buildJob)
+	sp, err := s.Backend.CreatePodTemplateSpec(ctx, buildJob)
 	if err != nil {
 		return nil, err
 	}
-	// FIXME(AkihiroSuda): update the job if already exists
-	_, err = ps.s.KubeClientset.BatchV1().Jobs(buildJob.Namespace).Create(jobManifest)
+	spJSON, err := json.Marshal(sp)
 	if err != nil {
 		return nil, err
 	}
-	res := &api.BuildResponse{
-		JobName: jn,
+	res := &api.SpecResponse{
+		PodTemplateSpecJson: spJSON,
 	}
 	return res, nil
-}
-
-func jobName(buildJob crd.BuildJob) string {
-	return buildJob.Name + "-job"
 }
