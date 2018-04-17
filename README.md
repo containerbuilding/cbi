@@ -31,8 +31,8 @@ Plugin | Support Git context | Support ConfigMap Context | Support BuildKitSessi
 --- | --- | --- | ---
 [Docker](https://www.docker.com) | Yes ✅| Yes ✅ | Planned
 [img](https://github.com/genuinetools/img) | Planned | Planned |
-[BuildKit](https://github.com/moby/buildkit) | Yes ✅| Soon 🔜✅ | Planned
-[Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | Soon 🔜✅ |
+[BuildKit](https://github.com/moby/buildkit) | Yes ✅| Yes ✅ | Planned
+[Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | Yes ✅ |
 [OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | Planned |
 [Orca](https://github.com/cyphar/orca-build) | Planned | Planned |
 [Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |

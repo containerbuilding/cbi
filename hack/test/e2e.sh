@@ -54,4 +54,7 @@ e2e ex0 buildkit
 e2e ex0 buildah
 
 # ex1: configmap context
-e2e ex1 docker
+for f in docker buildkit buildah; do
+    e2e ex1 $f
+    kubectl delete configmap ex1-configmap
+done
