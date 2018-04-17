@@ -1,4 +1,4 @@
 dist: trusty
 sudo: required
 script:
-  - ./hack/travis/travis.sh
+  - ./hack/test/travis.sh

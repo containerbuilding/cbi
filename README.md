@@ -97,7 +97,7 @@ buildjob "ex0" deleted
 
 ### Advanced usage
 
-#### Specifying plugin (*UNIMPLEMENTED YET*):
+#### Specifying plugin:
 
 Specify the `pluginSelector` constraint as follows:
 
@@ -108,8 +108,7 @@ metadata:
   name: ex0
   ...
 spec:
-  pluginSelector:
-    kind: Buildah
+  pluginSelector: plugin.name=buildah
   ...
 ```
 

@@ -36,11 +36,10 @@ var _ backend.Backend = &BuildKit{}
 
 func (b *BuildKit) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
 	res := &pluginapi.InfoResponse{
-		SupportedLanguageKind: []string{
-			crd.LanguageKindDockerfile,
-		},
-		SupportedContextKind: []string{
-			crd.ContextKindGit,
+		Labels: map[string]string{
+			pluginapi.LPluginName:         "buildkit",
+			pluginapi.LLanguageDockerfile: "",
+			pluginapi.LContextGit:         "",
 		},
 	}
 	return res, nil

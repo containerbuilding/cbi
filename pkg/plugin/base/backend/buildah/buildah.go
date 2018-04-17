@@ -35,11 +35,10 @@ var _ backend.Backend = &Buildah{}
 
 func (b *Buildah) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
 	res := &pluginapi.InfoResponse{
-		SupportedLanguageKind: []string{
-			crd.LanguageKindDockerfile,
-		},
-		SupportedContextKind: []string{
-			crd.ContextKindGit,
+		Labels: map[string]string{
+			pluginapi.LPluginName:         "buildah",
+			pluginapi.LLanguageDockerfile: "",
+			pluginapi.LContextGit:         "",
 		},
 	}
 	return res, nil

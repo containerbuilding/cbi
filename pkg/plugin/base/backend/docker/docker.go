@@ -34,11 +34,10 @@ var _ backend.Backend = &Docker{}
 
 func (b *Docker) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
 	res := &pluginapi.InfoResponse{
-		SupportedLanguageKind: []string{
-			crd.LanguageKindDockerfile,
-		},
-		SupportedContextKind: []string{
-			crd.ContextKindGit,
+		Labels: map[string]string{
+			pluginapi.LPluginName:         "docker",
+			pluginapi.LLanguageDockerfile: "",
+			pluginapi.LContextGit:         "",
 		},
 	}
 	return res, nil

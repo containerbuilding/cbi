@@ -19,16 +19,17 @@ package pluginselector
 import (
 	"context"
 	"fmt"
-	"strings"
 
+	"github.com/golang/glog"
 	"google.golang.org/grpc"
 
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	api "github.com/containerbuilding/cbi/pkg/plugin/api"
 )
 
-type PluginSelectorFunc func(plugins []api.InfoResponse, bj crd.BuildJob) int
+type PluginSelectorFunc func(plugins []api.InfoResponse, bj crd.BuildJob) (int, error)
 
+// FIXME: we really should have grpc.ClientConn here.
 func NewPluginSelector(fn PluginSelectorFunc, conns ...*grpc.ClientConn) *PluginSelector {
 	ps := &PluginSelector{
 		fn:         fn,
@@ -74,38 +75,13 @@ func (ps *PluginSelector) Select(bj crd.BuildJob) api.PluginClient {
 			info = append(info, *i)
 		}
 	}
-	idx := ps.fn(info, bj)
+	idx, err := ps.fn(info, bj)
+	if err != nil {
+		glog.Warning(err)
+	}
 	if idx >= 0 {
 		conn := conns[idx]
 		return api.NewPluginClient(conn)
 	}
 	return nil
-}
-
-func GenericPluginSelectorFunc(plugins []api.InfoResponse, bj crd.BuildJob) int {
-	var supported []int
-	for idx, info := range plugins {
-		languageKindSupported := false
-		contextKindSupported := false
-		for _, l := range info.SupportedLanguageKind {
-			languageKindSupported = strings.EqualFold(l, bj.Spec.Language.Kind)
-			if languageKindSupported {
-				break
-			}
-		}
-		for _, c := range info.SupportedContextKind {
-			contextKindSupported = strings.EqualFold(c, bj.Spec.Context.Kind)
-			if contextKindSupported {
-				break
-			}
-		}
-		if languageKindSupported && contextKindSupported {
-			supported = append(supported, idx)
-		}
-	}
-	if len(supported) > 0 {
-		// TODO: shuffle?
-		return supported[0]
-	}
-	return -1
 }
