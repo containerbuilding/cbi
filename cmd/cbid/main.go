@@ -36,6 +36,7 @@ import (
 
 	"github.com/containerbuilding/cbi/pkg/cbid/controller"
 	"github.com/containerbuilding/cbi/pkg/cbid/pluginselector"
+	"github.com/containerbuilding/cbi/pkg/cbid/pluginselector/generic"
 	clientset "github.com/containerbuilding/cbi/pkg/client/clientset/versioned"
 	informers "github.com/containerbuilding/cbi/pkg/client/informers/externalversions"
 	"github.com/containerbuilding/cbi/pkg/plugin"
@@ -67,7 +68,7 @@ func main() {
 		}
 		cbiPluginConns = append(cbiPluginConns, c)
 	}
-	ps := pluginselector.NewPluginSelector(pluginselector.GenericPluginSelectorFunc, cbiPluginConns...)
+	ps := pluginselector.NewPluginSelector(generic.SelectPlugin, cbiPluginConns...)
 	// FIXME: keep them latest
 	if err := ps.UpdateCachedInfo(context.TODO()); err != nil {
 		glog.Fatal(err)
