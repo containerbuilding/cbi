@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ex1-configmap
+data:
+  Dockerfile: |-
+    FROM busybox
+    ADD hello /
+    RUN cat /hello
+  hello: "hello, world"
+
+---
+
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex1
+spec:
+  image: example.com/akihirosuda/fowaadaa
+  push: false
+  language:
+    kind: Dockerfile
+  context:
+    kind: ConfigMap
+    configMapRef:
+      name: ex1-configmap

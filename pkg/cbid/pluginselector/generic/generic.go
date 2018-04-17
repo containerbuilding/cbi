@@ -29,26 +29,33 @@ import (
 
 func defaultRequirements(bj crd.BuildJob) ([]labels.Requirement, error) {
 	var requirements []labels.Requirement
-	switch k := bj.Spec.Language.Kind; k {
-	case crd.LanguageKindDockerfile:
-		r, err := labels.NewRequirement(api.LLanguageDockerfile, selection.Exists, nil)
+	languageLabels := map[string]string{
+		crd.LanguageKindDockerfile: api.LLanguageDockerfile,
+	}
+	l, ok := languageLabels[bj.Spec.Language.Kind]
+	if ok {
+		r, err := labels.NewRequirement(l, selection.Exists, nil)
 		if err != nil {
 			return nil, err
 		}
 		requirements = append(requirements, *r)
-	default:
+	} else {
 		return nil, &errors.UnexpectedObjectError{
 			Object: &bj,
 		}
 	}
-	switch k := bj.Spec.Context.Kind; k {
-	case crd.ContextKindGit:
-		r, err := labels.NewRequirement(api.LContextGit, selection.Exists, nil)
+	contextLabels := map[string]string{
+		crd.ContextKindGit:       api.LContextGit,
+		crd.ContextKindConfigMap: api.LContextConfigMap,
+	}
+	l, ok = contextLabels[bj.Spec.Context.Kind]
+	if ok {
+		r, err := labels.NewRequirement(l, selection.Exists, nil)
 		if err != nil {
 			return nil, err
 		}
 		requirements = append(requirements, *r)
-	default:
+	} else {
 		return nil, &errors.UnexpectedObjectError{
 			Object: &bj,
 		}

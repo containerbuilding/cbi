@@ -18,14 +18,26 @@ with support for several backends such as [Docker](https://www.docker.com), [img
 
 Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 --- | --- | --- | ---
-[Docker](https://www.docker.com) | Yes | |
+[Docker](https://www.docker.com) | Yes ✅| |
 [img](https://github.com/genuinetools/img) | Planned | |
-[BuildKit](https://github.com/moby/buildkit) | Yes | Planned | Planned
-[Buildah](https://github.com/projectatomic/buildah) | Yes | |
+[BuildKit](https://github.com/moby/buildkit) | Yes ✅| Planned? (TBD) | Planned
+[Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | |
 [OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | |
 [Orca](https://github.com/cyphar/orca-build) | Planned | |
 [Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |
-[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Yes | |
+[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Soon 🔜✅ | |
+
+Plugin | Support Git context | Support ConfigMap Context | Support BuildKitSession Context
+--- | --- | --- | ---
+[Docker](https://www.docker.com) | Yes ✅| Yes ✅ | Planned
+[img](https://github.com/genuinetools/img) | Planned | Planned |
+[BuildKit](https://github.com/moby/buildkit) | Yes ✅| Soon 🔜✅ | Planned
+[Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | Soon 🔜✅ |
+[OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | Planned |
+[Orca](https://github.com/cyphar/orca-build) | Planned | Planned |
+[Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |
+[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Planned | Soon 🔜✅ |
+
 
 Please feel free to open PRs to add other plugins.
 

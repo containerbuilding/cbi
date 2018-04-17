@@ -38,5 +38,10 @@ const (
 	//
 	// Value SHOULD be empty.
 	LContextGit = "context.git"
-	// TODO: add LContextConfigMap = "context.configmap"...
+
+	// LContextConfigMap SHOULD be present if the plugin accepts a BuildJob
+	// with Context.Kind = ContextKindConfigMap
+	//
+	// Value SHOULD be empty.
+	LContextConfigMap = "context.configmap"
 )

@@ -73,8 +73,9 @@ const LanguageKindDockerfile = "Dockerfile"
 
 // Context specifies the context.
 type Context struct {
-	Kind   string `json:"kind"`
-	GitRef GitRef `json:"gitRef"`
+	Kind         string       `json:"kind"`
+	GitRef       GitRef       `json:"gitRef"`
+	ConfigMapRef ConfigMapRef `json:"configMapRef"`
 }
 
 // ContextKindGit stands for Git context.
@@ -89,6 +90,16 @@ type GitRef struct {
 	URL string `json:"url"`
 	// TODO: add separate fields for host, branch, subdir...
 	// Then we should deprecate this docker-style URL.
+}
+
+// ContextKindConfigMap stands for ConfigMap context.
+// When BuildJob.Context.Kind is set to ContextKindConfigMap, the controller
+// MUST add "context.configmap" to its default plugin selector logic.
+const ContextKindConfigMap = "ConfigMap"
+
+type ConfigMapRef struct {
+	// Kubernetes configmap in the current namespace
+	Name string `json:"name"`
 }
 
 // BuildJobStatus is the status for a BuildJob resource
