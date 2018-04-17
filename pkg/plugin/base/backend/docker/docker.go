@@ -38,22 +38,13 @@ func (b *Docker) Info(ctx context.Context, req *pluginapi.InfoRequest) (*plugina
 			pluginapi.LPluginName:         "docker",
 			pluginapi.LLanguageDockerfile: "",
 			pluginapi.LContextGit:         "",
+			pluginapi.LContextConfigMap:   "",
 		},
 	}
 	return res, nil
 }
 
-func (b *Docker) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Push {
-		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
-	}
-	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
-		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
-	}
-	if buildJob.Spec.Context.Kind != crd.ContextKindGit {
-		return nil, fmt.Errorf("unsupported Spec.Context: %v", buildJob.Spec.Context)
-	}
-
+func commonPodSpec() corev1.PodSpec {
 	hostPathFile := corev1.HostPathFile
 	// TODO(AkihiroSuda): support NodeSelector
 	podSpec := corev1.PodSpec{
@@ -63,9 +54,7 @@ func (b *Docker) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJo
 				Name: "docker-job",
 				// The upstream docker:18.03 lacks git
 				Image: "nathanielc/docker-client:17.03.1-ce",
-				Command: []string{"docker", "build", "-t", buildJob.Spec.Image,
-					buildJob.Spec.Context.GitRef.URL,
-				},
+				// Commands needs to be provided by the caller
 				VolumeMounts: []corev1.VolumeMount{
 					{
 						Name:      "docker-sock-volume",
@@ -86,6 +75,51 @@ func (b *Docker) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJo
 			},
 		},
 	}
+	return podSpec
+
+}
+
+func (b *Docker) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
+	if buildJob.Spec.Push {
+		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
+	}
+	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
+		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
+	}
+
+	podSpec := commonPodSpec()
+	switch k := buildJob.Spec.Context.Kind; k {
+	case crd.ContextKindGit:
+		podSpec.Containers[0].Command = []string{"docker", "build", "-t", buildJob.Spec.Image,
+			buildJob.Spec.Context.GitRef.URL,
+		}
+	case crd.ContextKindConfigMap:
+		volName := "cbi-context"
+		volMountPath := "/context"
+		configMapVolume := corev1.Volume{
+			Name: volName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: buildJob.Spec.Context.ConfigMapRef.Name,
+					},
+				},
+			},
+		}
+		podSpec.Volumes = append(podSpec.Volumes, configMapVolume)
+		podSpec.Containers[0].VolumeMounts = append(podSpec.Containers[0].VolumeMounts,
+			corev1.VolumeMount{
+				Name:      volName,
+				MountPath: volMountPath,
+			},
+		)
+		podSpec.Containers[0].Command = []string{"docker", "build", "-t", buildJob.Spec.Image,
+			volMountPath,
+		}
+	default:
+		return nil, fmt.Errorf("unsupported Spec.Context: %v", k)
+	}
+
 	return &corev1.PodTemplateSpec{
 		Spec: podSpec,
 	}, nil
