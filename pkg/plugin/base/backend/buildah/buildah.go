@@ -63,16 +63,14 @@ func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJ
 			{
 				Name:  "buildah-job",
 				Image: b.Image,
-				// FIXME: figure out why we can't use overlay2 on kubeadm-dind-cluster,
-				// even with the emptyDir volume for /var/lib/containers/storage.
-				Command: []string{"buildah", "--storage-driver", "vfs",
+				Command: []string{"buildah",
 					"bud", "-t", buildJob.Spec.Image,
 					buildJob.Spec.Context.GitRef.URL,
 				},
 				VolumeMounts: []corev1.VolumeMount{
 					{
 						Name: "buildah-storage-volume",
-						// we need this volume for overlay2 storage driver.
+						// we need this volume for overlay storage driver.
 						MountPath: "/var/lib/containers/storage",
 					},
 				},

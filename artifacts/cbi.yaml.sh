@@ -170,7 +170,7 @@ spec:
       containers:
       - name: cbi-buildkit-buildkitd
         image: tonistiigi/buildkit
-        args: ["--oci-worker-snapshotter", "native", "--addr", "tcp://0.0.0.0:1234"]
+        args: ["--addr", "tcp://0.0.0.0:1234"]
         imagePullPolicy: Always
         ports:
         - containerPort: 1234
