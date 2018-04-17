@@ -1,4 +1,4 @@
-DIND_CLUSTER_SH_URL=https://raw.githubusercontent.com/AkihiroSuda/kubeadm-dind-cluster/3a07ca3b72d95b4b4f62b39e7f58591a8799f660/fixed/dind-cluster-v1.9.sh
+DIND_CLUSTER_SH_URL=https://raw.githubusercontent.com/Mirantis/kubeadm-dind-cluster/77a19b5997722814aa9dfb785a08a5d199226fc8/fixed/dind-cluster-v1.9.sh
 DIND_CLUSTER_SH=/tmp/dind-cluster-v1.9.sh
 
 # hardcoded in DIND_CLUSTER_SH
