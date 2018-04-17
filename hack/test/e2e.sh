@@ -29,6 +29,7 @@ tag="test-$(date +%s)"
 # TODO: move to golang
 for ex in ex0; do
     for plugin in docker buildkit buildah; do
+        echo "travis_fold:start:${ex}-${plugin}"
         echo "========== Testing ${ex} using ${plugin} plugin =========="
         # create a BuildJob
         (cat artifacts/examples/${ex}.yaml; echo "  pluginSelector: plugin.name=${plugin}") | kubectl create -f -
@@ -43,5 +44,6 @@ for ex in ex0; do
         kubectl logs -f ${pod}
         # delete the BuildJob
         kubectl delete buildjob ${ex}
+        echo "travis_fold:end:${ex}-${plugin}"
     done
 done
