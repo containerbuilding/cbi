@@ -1,7 +1,7 @@
 apiVersion: cbi.containerbuilding.github.io/v1alpha1
 kind: BuildJob
 metadata:
-  name: ex0
+  name: ex-git-nopush
 spec:
   image: example.com/akihirosuda/fowaadaa
   push: false

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ex1-configmap
+  name: ex-configmap-nopush-configmap
 data:
   Dockerfile: |-
     FROM busybox
@@ -14,7 +14,7 @@ data:
 apiVersion: cbi.containerbuilding.github.io/v1alpha1
 kind: BuildJob
 metadata:
-  name: ex1
+  name: ex-configmap-nopush
 spec:
   image: example.com/akihirosuda/fowaadaa
   push: false
@@ -23,4 +23,4 @@ spec:
   context:
     kind: ConfigMap
     configMapRef:
-      name: ex1-configmap
+      name: ex-configmap-nopush-configmap

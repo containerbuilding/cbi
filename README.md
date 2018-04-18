@@ -76,25 +76,25 @@ You may execute `kubectl edit deployment cbid` to remove unneeded plugins or cha
 
 ### Run your first `buildjob`
 
-Create a buildjob `ex0` from [`artifacts/examples/ex0.yaml`](artifacts/examples/ex0.yaml):
+Create a buildjob `ex-git-nopush` from [`artifacts/examples/ex-git-nopush.yaml`](artifacts/examples/ex-git-nopush.yaml):
 ```console
-$ kubectl create -f artifacts/examples/ex0.yaml
-buildjob "ex0" created
+$ kubectl create -f artifacts/examples/ex-git-nopush.yaml
+buildjob "ex-git-nopush" created
 ```
 
 Make sure the buildjob is created:
 ```console
 $ kubectl get buildjobs
 NAME      AGE
-ex0       3s
+ex-git-nopush       3s
 ```
 
 Inspect the underlying job and the result:
 ```console
-$ kubectl get job $(kubectl get buildjob ex0 --output=jsonpath={.status.job})
+$ kubectl get job $(kubectl get buildjob ex-git-nopush --output=jsonpath={.status.job})
 NAME      DESIRED   SUCCESSFUL   AGE
-ex0-job   1         1            30s
-$ kubectl logs $(kubectl get pods --selector=job-name=ex0-job --show-all --output=jsonpath={.items..metadata.name})
+ex-git-nopush-job   1         1            30s
+$ kubectl logs $(kubectl get pods --selector=job-name=ex-git-nopush-job --show-all --output=jsonpath={.items..metadata.name})
 Sending build context to Docker daemon 79.87 kB
 Step 1 : FROM alpine:latest
 ...
@@ -103,8 +103,8 @@ Successfully built bef4a548fb02
 
 Delete the buildjob (and the underlying job)
 ```console
-$ kubectl delete buildjobs ex0
-buildjob "ex0" deleted
+$ kubectl delete buildjobs ex-git-nopush
+buildjob "ex-git-nopush" deleted
 ```
 
 ### Advanced usage
@@ -117,7 +117,7 @@ Specify the `pluginSelector` constraint as follows:
 apiVersion: cbi.containerbuilding.github.io/v1alpha1
 kind: BuildJob
 metadata:
-  name: ex0
+  name: ex-git-nopush
   ...
 spec:
   pluginSelector: plugin.name=buildah
