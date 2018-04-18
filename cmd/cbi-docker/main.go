@@ -33,9 +33,19 @@ func main() {
 		// flag.CommandLine is associated with flag.ExitOnError
 		FlagSet: flag.CommandLine,
 		Args:    os.Args[1:],
-		CreateBackend: func() (backend.Backend, error) {
-			return &docker.Docker{}, nil
-		},
+	}
+	var (
+		image string
+	)
+	o.FlagSet.StringVar(&image, "docker-image", "", "image with /docker-build-push.sh, used for running docker job")
+	o.CreateBackend = func() (backend.Backend, error) {
+		if image == "" {
+			glog.Fatal("no docker-image provided")
+		}
+		b := &docker.Docker{
+			Image: image,
+		}
+		return b, nil
 	}
 	if err := cmd.Main(o); err != nil {
 		glog.Fatal(err)

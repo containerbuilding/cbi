@@ -29,6 +29,7 @@ import (
 )
 
 type Docker struct {
+	Image string
 }
 
 var _ backend.Backend = &Docker{}
@@ -52,11 +53,24 @@ func (b *Docker) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 		RestartPolicy: corev1.RestartPolicyNever,
 		Containers: []corev1.Container{
 			{
-				Name: "docker-job",
-				// The upstream docker:18.03 lacks git
-				Image: "nathanielc/docker-client:17.03.1-ce",
-				Command: []string{"docker",
-					"build", "-t", buildJob.Spec.Image,
+				Name:  "docker-job",
+				Image: b.Image,
+				Command: []string{
+					"/docker-build-push.sh",
+				},
+				Env: []corev1.EnvVar{
+					{
+						Name:  "DBP_DOCKER_BINARY",
+						Value: "docker",
+					},
+					{
+						Name:  "DBP_IMAGE_NAME",
+						Value: buildJob.Spec.Image,
+					},
+					{
+						Name:  "DBP_PUSH",
+						Value: "0",
+					},
 				},
 				VolumeMounts: []corev1.VolumeMount{
 					{

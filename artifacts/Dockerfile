@@ -16,12 +16,17 @@ FROM base AS cbi-docker
 COPY --from=compile /cbi-docker /cbi-docker
 ENTRYPOINT ["/cbi-docker"]
 
+FROM docker:17.09 AS cbi-docker-docker
+RUN apk add --no-cache git
+ADD artifacts/dockerfile.d/docker-build-push.sh /
+
 FROM base AS cbi-buildah
 COPY --from=compile /cbi-buildah /cbi-buildah
 ENTRYPOINT ["/cbi-buildah"]
 
 FROM fedora:rawhide AS cbi-buildah-buildah
 RUN dnf install -y git buildah && dnf clean all
+ADD artifacts/dockerfile.d/docker-build-push.sh /
 
 FROM base AS cbi-buildkit
 COPY --from=compile /cbi-buildkit /cbi-buildkit
