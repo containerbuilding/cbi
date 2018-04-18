@@ -68,6 +68,10 @@ func (b *Buildah) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 						Value: buildJob.Spec.Registry.Target,
 					},
 					{
+						Name:  "DBP_DIALECT",
+						Value: "buildah",
+					},
+					{
 						Name:  "DBP_PUSH",
 						Value: "0",
 					},

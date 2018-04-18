@@ -34,15 +34,19 @@ function e2e(){
     echo "========== Testing ${ex} using ${plugin} plugin =========="
     # create a BuildJob
     (cat artifacts/examples/${ex}.yaml; echo "  pluginSelector: plugin.name=${plugin}") | kubectl create -f -
+    jobname=${ex}-job
     # wait for the underlying job
     pod=
     while [[ -z $pod ]]; do
-        pod=$(kubectl get pods --selector=job-name=${ex}-job --show-all --output=jsonpath={.items..metadata.name})
+        pod=$(kubectl get pods --selector=job-name=${jobname} --show-all --output=jsonpath={.items..metadata.name})
         sleep 10
     done
     until kubectl logs ${pod} > /dev/null 2>&1; do sleep 10; done
     # show the log and wait for completion
     kubectl logs -f ${pod}
+    succeeded=$(kubectl get job ${jobname}  --output=jsonpath={.status.succeeded})
+    echo "Succeeded: ${succeeded}"
+    [[ ${succeeded} = 1 ]]
     # delete the BuildJob
     kubectl delete buildjob ${ex}
     echo "travis_fold:end:${ex}-${plugin}"
