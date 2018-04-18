@@ -47,6 +47,10 @@ func (b *Buildah) Info(ctx context.Context, req *pluginapi.InfoRequest) (*plugin
 }
 
 func (b *Buildah) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
+	push := "0"
+	if buildJob.Spec.Registry.Push {
+		push = "1"
+	}
 	// TODO(AkihiroSuda): support non-privileged
 	privileged := true
 	podSpec := corev1.PodSpec{
@@ -73,7 +77,7 @@ func (b *Buildah) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 					},
 					{
 						Name:  "DBP_PUSH",
-						Value: "0",
+						Value: push,
 					},
 				},
 				VolumeMounts: []corev1.VolumeMount{
@@ -102,13 +106,16 @@ func (b *Buildah) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 }
 
 func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Registry.Push {
-		return nil, fmt.Errorf("unsupported Spec.Registry.Push: %v", buildJob.Spec.Registry.Push)
-	}
 	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
 		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
 	}
 	podSpec := b.commonPodSpec(buildJob)
+	if buildJob.Spec.Registry.Push {
+		if len(buildJob.Spec.Registry.SecretRefs) != 1 {
+			return nil, fmt.Errorf("expected 1 Spec.Registry.SecretRefs, got %d", len(buildJob.Spec.Registry.SecretRefs))
+		}
+		util.InjectRegistrySecret(&podSpec, 0, "/root", buildJob.Spec.Registry.SecretRefs[0])
+	}
 	switch k := buildJob.Spec.Context.Kind; k {
 	case crd.ContextKindGit:
 		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{

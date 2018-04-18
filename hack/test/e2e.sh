@@ -44,7 +44,11 @@ function e2e(){
     until kubectl logs ${pod} > /dev/null 2>&1; do sleep 10; done
     # show the log and wait for completion
     kubectl logs -f ${pod}
-    succeeded=$(kubectl get job ${jobname}  --output=jsonpath={.status.succeeded})
+    succeeded=
+    while [[ -z ${succeeded} ]]; do
+        succeeded=$(kubectl get job ${jobname}  --output=jsonpath={.status.succeeded})
+        sleep 10
+    done
     echo "Succeeded: ${succeeded}"
     [[ ${succeeded} = 1 ]]
     # delete the BuildJob
