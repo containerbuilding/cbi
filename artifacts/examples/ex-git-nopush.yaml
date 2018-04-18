@@ -3,11 +3,12 @@ kind: BuildJob
 metadata:
   name: ex-git-nopush
 spec:
-  image: example.com/akihirosuda/fowaadaa
-  push: false
+  registry:
+    target: example.com/foo/ex-git-nopush
+    push: false
   language:
     kind: Dockerfile
   context:
     kind: Git
-    gitRef:
+    git:
       url: git://github.com/AkihiroSuda/fowaadaa
