@@ -10,7 +10,6 @@ if [ ! "${DBP_DOCKER_BINARY}" ]; then
     echo "DBP_DOCKER_BINARY needs to be set (string)"
     exit 1
 fi
-docker=${DBP_DOCKER_BINARY}
 
 
 if [ ! "${DBP_IMAGE_NAME}" ]; then
@@ -23,8 +22,29 @@ if [ ! "${DBP_PUSH}" ]; then
     exit 1
 fi
 
-${docker} build -t ${DBP_IMAGE_NAME} $@
+if [ ! "${DBP_DIALECT}" ]; then
+    echo "DBP_DIALECT needs to be set (docker or buildah)"
+    exit 1
+fi
+
+case ${DBP_DIALECT} in
+    docker)
+        ${DBP_DOCKER_BINARY} build -t ${DBP_IMAGE_NAME} $@ ;;
+    buildah)
+        ${DBP_DOCKER_BINARY} bud -t ${DBP_IMAGE_NAME} $@ ;;
+    *)
+        echo "Unsupported dialect: ${DBP_DIALECT}"
+        exit 1
+esac
 
 if [ "${DBP_PUSH}" = 1 ]; then
-    ${docker} push ${DBP_IMAGE_NAME}
+    case ${DBP_DIALECT} in
+        docker)
+            ${DBP_DOCKER_BINARY} push ${DBP_IMAGE_NAME} ;;
+        buildah)
+            ${DBP_DOCKER_BINARY} push ${DBP_IMAGE_NAME} docker://${DBP_IMAGE_NAME} ;;
+        *)
+            echo "Unsupported dialect: ${DBP_DIALECT}"
+            exit 1
+    esac
 fi
