@@ -37,7 +37,7 @@ func main() {
 	var (
 		image string
 	)
-	o.FlagSet.StringVar(&image, "buildah-image", "", "image used for running buildah job")
+	o.FlagSet.StringVar(&image, "buildah-image", "", "image with /docker-build-push.sh, used for running buildah job")
 	o.CreateBackend = func() (backend.Backend, error) {
 		if image == "" {
 			glog.Fatal("no buildah-image provided")

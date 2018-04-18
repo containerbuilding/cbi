@@ -48,13 +48,13 @@ function e2e(){
     echo "travis_fold:end:${ex}-${plugin}"
 }
 
-# ex0: git context
-e2e ex0 docker
-e2e ex0 buildkit
-e2e ex0 buildah
+# ex-git-nopush: git context
+e2e ex-git-nopush docker
+e2e ex-git-nopush buildkit
+e2e ex-git-nopush buildah
 
-# ex1: configmap context
+# ex-configmap-nopush: configmap context
 for f in docker buildkit buildah; do
-    e2e ex1 $f
-    kubectl delete configmap ex1-configmap
+    e2e ex-configmap-nopush $f
+    kubectl delete configmap ex-configmap-nopush-configmap
 done

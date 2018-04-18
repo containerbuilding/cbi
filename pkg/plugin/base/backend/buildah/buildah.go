@@ -55,8 +55,22 @@ func (b *Buildah) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 			{
 				Name:  "buildah-job",
 				Image: b.Image,
-				Command: []string{"buildah",
-					"bud", "-t", buildJob.Spec.Image,
+				Command: []string{
+					"/docker-build-push.sh",
+				},
+				Env: []corev1.EnvVar{
+					{
+						Name:  "DBP_DOCKER_BINARY",
+						Value: "buildah",
+					},
+					{
+						Name:  "DBP_IMAGE_NAME",
+						Value: buildJob.Spec.Image,
+					},
+					{
+						Name:  "DBP_PUSH",
+						Value: "0",
+					},
 				},
 				VolumeMounts: []corev1.VolumeMount{
 					{

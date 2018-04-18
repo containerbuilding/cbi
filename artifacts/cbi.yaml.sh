@@ -69,7 +69,7 @@ spec:
       containers:
       - name: cbi-docker
         image: ${REGISTRY}/cbi-docker:${TAG}
-        args: ["-logtostderr", "-v=4"]
+        args: ["-logtostderr", "-v=4", "-docker-image=${REGISTRY}/cbi-docker-docker:${TAG}"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111
