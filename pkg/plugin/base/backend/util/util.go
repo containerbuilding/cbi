@@ -22,6 +22,34 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// InjectRegistrySecret injects .dockerconfigjson secret to ~/.docker/config.json
+func InjectRegistrySecret(podSpec *corev1.PodSpec, containerIdx int, homeDir string, secretRef corev1.LocalObjectReference) {
+	volMountPath := filepath.Join(homeDir, ".docker")
+	volName := "cbi-registrysecret"
+	vol := corev1.Volume{
+		Name: volName,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: secretRef.Name,
+				Items: []corev1.KeyToPath{
+					{
+						Key:  ".dockerconfigjson",
+						Path: "config.json",
+					},
+				},
+			},
+		},
+	}
+	podSpec.Volumes = append(podSpec.Volumes, vol)
+	podSpec.Containers[containerIdx].VolumeMounts = append(podSpec.Containers[containerIdx].VolumeMounts,
+		corev1.VolumeMount{
+			Name:      volName,
+			MountPath: volMountPath,
+			ReadOnly:  true,
+		},
+	)
+}
+
 // InjectConfigMap injects a config map to podSpec and returns the context path
 func InjectConfigMap(podSpec *corev1.PodSpec, containerIdx int, configMapRef corev1.LocalObjectReference) string {
 	const (
