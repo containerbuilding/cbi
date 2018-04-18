@@ -25,6 +25,7 @@ import (
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	pluginapi "github.com/containerbuilding/cbi/pkg/plugin/api"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/backend/util"
 )
 
 type Buildah struct {
@@ -39,22 +40,13 @@ func (b *Buildah) Info(ctx context.Context, req *pluginapi.InfoRequest) (*plugin
 			pluginapi.LPluginName:         "buildah",
 			pluginapi.LLanguageDockerfile: "",
 			pluginapi.LContextGit:         "",
+			pluginapi.LContextConfigMap:   "",
 		},
 	}
 	return res, nil
 }
 
-func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Push {
-		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
-	}
-	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
-		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
-	}
-	if buildJob.Spec.Context.Kind != crd.ContextKindGit {
-		return nil, fmt.Errorf("unsupported Spec.Context: %v", buildJob.Spec.Context)
-	}
-
+func (b *Buildah) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 	// TODO(AkihiroSuda): support non-privileged
 	privileged := true
 	podSpec := corev1.PodSpec{
@@ -65,7 +57,6 @@ func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJ
 				Image: b.Image,
 				Command: []string{"buildah",
 					"bud", "-t", buildJob.Spec.Image,
-					buildJob.Spec.Context.GitRef.URL,
 				},
 				VolumeMounts: []corev1.VolumeMount{
 					{
@@ -88,6 +79,30 @@ func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJ
 				},
 			},
 		},
+	}
+	return podSpec
+}
+
+func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
+	if buildJob.Spec.Push {
+		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
+	}
+	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
+		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
+	}
+	podSpec := b.commonPodSpec(buildJob)
+	switch k := buildJob.Spec.Context.Kind; k {
+	case crd.ContextKindGit:
+		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
+			buildJob.Spec.Context.GitRef.URL,
+		}...)
+	case crd.ContextKindConfigMap:
+		volMountPath := util.InjectConfigMap(&podSpec, 0, buildJob.Spec.Context.ConfigMapRef.Name)
+		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
+			volMountPath,
+		}...)
+	default:
+		return nil, fmt.Errorf("unsupported Spec.Context: %v", k)
 	}
 	return &corev1.PodTemplateSpec{
 		Spec: podSpec,
