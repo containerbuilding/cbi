@@ -66,8 +66,8 @@ func (b *BuildKit) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 }
 
 func (b *BuildKit) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Push {
-		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
+	if buildJob.Spec.Registry.Push {
+		return nil, fmt.Errorf("unsupported Spec.Registry.Push: %v", buildJob.Spec.Registry.Push)
 	}
 	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
 		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
@@ -77,10 +77,10 @@ func (b *BuildKit) CreatePodTemplateSpec(ctx context.Context, buildJob crd.Build
 	switch k := buildJob.Spec.Context.Kind; k {
 	case crd.ContextKindGit:
 		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
-			"--frontend-opt", "context=" + buildJob.Spec.Context.GitRef.URL,
+			"--frontend-opt", "context=" + buildJob.Spec.Context.Git.URL,
 		}...)
 	case crd.ContextKindConfigMap:
-		volMountPath := util.InjectConfigMap(&podSpec, 0, buildJob.Spec.Context.ConfigMapRef.Name)
+		volMountPath := util.InjectConfigMap(&podSpec, 0, buildJob.Spec.Context.ConfigMapRef)
 		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
 			"--local", "context=" + volMountPath,
 			"--local", "dockerfile=" + volMountPath,

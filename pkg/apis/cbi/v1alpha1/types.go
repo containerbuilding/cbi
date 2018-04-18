@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,12 +36,8 @@ type BuildJob struct {
 
 // BuildJobSpec is the spec for a BuildJob resource
 type BuildJobSpec struct {
-	// Image is used for pushing the artifact to the registry.
-	// e.g. `example.com:foo/bar:latest`
-	Image string `json:"image"`
-	// Push pushes the image.
-	// +optional
-	Push bool `json:"push"`
+	// Registry specifies the registry.
+	Registry Registry `json:"registry"`
 	// Language specifies the language.
 	Language Language `json:"language"`
 	// Context specifies the context.
@@ -61,45 +58,63 @@ type BuildJobSpec struct {
 	PluginSelector string `json:"pluginSelector"`
 }
 
+// Registry specifies the registry.
+type Registry struct {
+	// Target is used for pushing the artifact to the registry.
+	// Most plugin implementations would require non-empty Target string,
+	// even when Push is set to false.
+	// +optional
+	// e.g. `example.com:foo/bar:latest`
+	Target string `json:"target"`
+	// Push pushes the image.
+	// Can be set to false, especially for testing purposes.
+	// +optional
+	Push bool `json:"push"`
+	// SecretRefs used for pushing and pulling.
+	// Most plugin implementations would only accept a single entry.
+	// +optional
+	SecretRefs []corev1.LocalObjectReference `json:"secretRefs"`
+}
+
 // Language specifies the language.
 type Language struct {
 	Kind string `json:"kind"`
 }
 
-// LanguageKindDockerfile stands for Dockerfile.
-// When BuildJob.Language.Kind is set to LanguageKindDockerfile, the controller
-// MUST add "language.dockerfile" to its default plugin selector logic.
-const LanguageKindDockerfile = "Dockerfile"
+const (
+	// LanguageKindDockerfile stands for Dockerfile.
+	// When BuildJob.Language.Kind is set to LanguageKindDockerfile, the controller
+	// MUST add "language.dockerfile" to its default plugin selector logic.
+	LanguageKindDockerfile = "Dockerfile"
+)
 
 // Context specifies the context.
 type Context struct {
-	Kind         string       `json:"kind"`
-	GitRef       GitRef       `json:"gitRef"`
-	ConfigMapRef ConfigMapRef `json:"configMapRef"`
+	Kind         string                      `json:"kind"`
+	Git          Git                         `json:"git"`
+	ConfigMapRef corev1.LocalObjectReference `json:"configMapRef"`
 }
 
-// ContextKindGit stands for Git context.
-// When BuildJob.Context.Kind is set to ContextKindGit, the controller
-// MUST add "context.git" to its default plugin selector logic.
-const ContextKindGit = "Git"
+const (
+	// ContextKindGit stands for Git context.
+	// When BuildJob.Context.Kind is set to ContextKindGit, the controller
+	// MUST add "context.git" to its default plugin selector logic.
+	ContextKindGit = "Git"
 
-type GitRef struct {
+	// ContextKindConfigMap stands for ConfigMap context.
+	// When BuildJob.Context.Kind is set to ContextKindConfigMap, the controller
+	// MUST add "context.configmap" to its default plugin selector logic.
+	ContextKindConfigMap = "ConfigMap"
+)
+
+// Git
+type Git struct {
 	// URL is the docker-style URL.
 	// e.g. `git://example.com/myrepo#mybranch:myfolder`.
 	// See https://docs.docker.com/engine/reference/commandline/build/#git-repositories
 	URL string `json:"url"`
 	// TODO: add separate fields for host, branch, subdir...
 	// Then we should deprecate this docker-style URL.
-}
-
-// ContextKindConfigMap stands for ConfigMap context.
-// When BuildJob.Context.Kind is set to ContextKindConfigMap, the controller
-// MUST add "context.configmap" to its default plugin selector logic.
-const ContextKindConfigMap = "ConfigMap"
-
-type ConfigMapRef struct {
-	// Kubernetes configmap in the current namespace
-	Name string `json:"name"`
 }
 
 // BuildJobStatus is the status for a BuildJob resource

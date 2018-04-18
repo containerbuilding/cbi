@@ -16,8 +16,9 @@ kind: BuildJob
 metadata:
   name: ex-configmap-nopush
 spec:
-  image: example.com/akihirosuda/fowaadaa
-  push: false
+  registry:
+    target: example.com/foo/ex-configmap-nopush
+    push: false
   language:
     kind: Dockerfile
   context:

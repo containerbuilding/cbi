@@ -17,14 +17,14 @@ message InfoRequest {
 }
 
 message InfoResponse {
-	// Plugin labels.
+  // Plugin labels.
   // This has nothing to do the labels of k8s objects of the pod.
   // e.g. pods, deployments, and services.
   //
-	// However, it is still valid to implement a plugin that loads its labels from
+  // However, it is still valid to implement a plugin that loads its labels from
   // k8s objects.
   //
-	// See labels.go for the predefined labels.
+  // See labels.go for the predefined labels.
   map<string, string> labels = 1;
 }
 

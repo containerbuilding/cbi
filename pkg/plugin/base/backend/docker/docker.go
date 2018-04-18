@@ -65,7 +65,7 @@ func (b *Docker) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 					},
 					{
 						Name:  "DBP_IMAGE_NAME",
-						Value: buildJob.Spec.Image,
+						Value: buildJob.Spec.Registry.Target,
 					},
 					{
 						Name:  "DBP_PUSH",
@@ -97,8 +97,8 @@ func (b *Docker) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 }
 
 func (b *Docker) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Push {
-		return nil, fmt.Errorf("unsupported Spec.Push: %v", buildJob.Spec.Push)
+	if buildJob.Spec.Registry.Push {
+		return nil, fmt.Errorf("unsupported Spec.Registry.Push: %v", buildJob.Spec.Registry.Push)
 	}
 	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
 		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
@@ -108,10 +108,10 @@ func (b *Docker) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJo
 	switch k := buildJob.Spec.Context.Kind; k {
 	case crd.ContextKindGit:
 		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
-			buildJob.Spec.Context.GitRef.URL,
+			buildJob.Spec.Context.Git.URL,
 		}...)
 	case crd.ContextKindConfigMap:
-		volMountPath := util.InjectConfigMap(&podSpec, 0, buildJob.Spec.Context.ConfigMapRef.Name)
+		volMountPath := util.InjectConfigMap(&podSpec, 0, buildJob.Spec.Context.ConfigMapRef)
 		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
 			volMountPath,
 		}...)

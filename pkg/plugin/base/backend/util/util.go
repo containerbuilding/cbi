@@ -23,7 +23,7 @@ import (
 )
 
 // InjectConfigMap injects a config map to podSpec and returns the context path
-func InjectConfigMap(podSpec *corev1.PodSpec, containerIdx int, configMapName string) string {
+func InjectConfigMap(podSpec *corev1.PodSpec, containerIdx int, configMapRef corev1.LocalObjectReference) string {
 	const (
 		// cmVol is a configmap volume (with symlinks)
 		cmVolName      = "cbi-cmcontext-tmp"
@@ -41,9 +41,7 @@ func InjectConfigMap(podSpec *corev1.PodSpec, containerIdx int, configMapName st
 		Name: cmVolName,
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: configMapName,
-				},
+				LocalObjectReference: configMapRef,
 			},
 		},
 	}
