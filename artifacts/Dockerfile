@@ -32,5 +32,9 @@ FROM base AS cbi-buildkit
 COPY --from=compile /cbi-buildkit /cbi-buildkit
 ENTRYPOINT ["/cbi-buildkit"]
 
+FROM base AS cbi-kaniko
+COPY --from=compile /cbi-kaniko /cbi-kaniko
+ENTRYPOINT ["/cbi-kaniko"]
+
 FROM alpine
 CMD echo 'nothing defined here, specify the target via `docker build --target`.'; false

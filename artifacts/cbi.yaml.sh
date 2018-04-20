@@ -203,6 +203,44 @@ spec:
   selector:
     app: cbi-buildkit-buildkitd
 ---
+## CBI plugin stuff (kaniko)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cbi-kaniko
+  labels:
+    app: cbi-kaniko
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cbi-kaniko
+  template:
+    metadata:
+      labels:
+        app: cbi-kaniko
+    spec:
+      containers:
+      - name: cbi-kaniko
+        image: ${REGISTRY}/cbi-kaniko:${TAG}
+        args: ["-logtostderr", "-v=4", "-kaniko-image=gcr.io/kaniko-project/executor:latest"]
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 12111
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cbi-kaniko
+  labels:
+    app: cbi-kaniko
+spec:
+  ports:
+  - port: 12111
+    protocol: TCP
+  selector:
+    app: cbi-kaniko
+---
 ## CBID stuff
 apiVersion: apps/v1
 kind: Deployment
@@ -224,7 +262,7 @@ spec:
       containers:
       - name: cbid
         image: ${REGISTRY}/cbid:${TAG}
-        args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker,cbi-buildah,cbi-buildkit"]
+        args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker,cbi-buildah,cbi-buildkit,cbi-kaniko"]
         imagePullPolicy: Always
 EOF
 echo "generated ${out}"

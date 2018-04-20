@@ -25,7 +25,7 @@ Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 [OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | |
 [Orca](https://github.com/cyphar/orca-build) | Planned | |
 [Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |
-[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Soon 🔜✅ | |
+[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Yes ✅ | |
 
 Plugin | Support Git context | Support ConfigMap Context | Support BuildKitSession Context
 --- | --- | --- | ---
@@ -36,7 +36,7 @@ Plugin | Support Git context | Support ConfigMap Context | Support BuildKitSessi
 [OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | Planned |
 [Orca](https://github.com/cyphar/orca-build) | Planned | Planned |
 [Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |
-[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Planned | Soon 🔜✅ |
+[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Planned | Yes ✅ |
 
 
 Please feel free to open PRs to add other plugins.
