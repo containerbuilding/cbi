@@ -12,10 +12,9 @@ fi
 REGISTRY="$1"
 TAG="$2"
 
-out=$(dirname $0)/$(basename $0 | sed -e s/.yaml.sh/.generated.yaml/)
-cat > ${out} << EOF
-# Autogenarated by $0 at $(date)
-## CRD
+
+function gen::crd {
+    cat << EOF
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -27,14 +26,21 @@ spec:
     kind: BuildJob
     plural: buildjobs
   scope: Namespaced
----
-## RBAC stuff
+EOF
+}
+
+function gen::sa {
+    cat << EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: cbi
   namespace: default
----
+EOF
+}
+
+function gen::clusterrolebinding {
+    cat << EOF
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
@@ -48,7 +54,45 @@ roleRef:
 #FIXME
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
----
+EOF
+}
+
+function gen::service {
+    local plugin=$1
+    cat << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: cbi-${plugin}
+  labels:
+    app: cbi-${plugin}
+spec:
+  ports:
+  - port: 12111
+    protocol: TCP
+  selector:
+    app: cbi-${plugin}
+EOF
+}
+
+o=$(dirname $0)/$(basename $0 | sed -e s/.yaml.sh/.generated.yaml/)
+
+echo "# Autogenarated by $0 at $(date)" > $o
+echo "## CRD" >> $o
+gen::crd >> $o
+echo "---" >> $o
+echo "## RBAC stuff" >> $o
+gen::sa >> $o
+echo "---" >> $o
+gen::clusterrolebinding >> $o
+echo "---" >> $o
+echo "## Plugin service stuff" >> $o
+for f in docker buildah buildkit kaniko; do
+    gen::service $f >> $o
+    echo "---" >> $o
+done
+
+cat >> $o << EOF
 ## CBI plugin stuff (docker)
 apiVersion: apps/v1
 kind: Deployment
@@ -69,23 +113,10 @@ spec:
       containers:
       - name: cbi-docker
         image: ${REGISTRY}/cbi-docker:${TAG}
-        args: ["-logtostderr", "-v=4", "-docker-image=${REGISTRY}/cbi-docker-docker:${TAG}"]
+        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-docker-image=${REGISTRY}/cbi-docker-docker:${TAG}"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: cbi-docker
-  labels:
-    app: cbi-docker
-spec:
-  ports:
-  - port: 12111
-    protocol: TCP
-  selector:
-    app: cbi-docker
 ---
 ## CBI plugin stuff (buildah)
 apiVersion: apps/v1
@@ -107,23 +138,10 @@ spec:
       containers:
       - name: cbi-buildah
         image: ${REGISTRY}/cbi-buildah:${TAG}
-        args: ["-logtostderr", "-v=4", "-buildah-image=${REGISTRY}/cbi-buildah-buildah:${TAG}"]
+        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-buildah-image=${REGISTRY}/cbi-buildah-buildah:${TAG}"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: cbi-buildah
-  labels:
-    app: cbi-buildah
-spec:
-  ports:
-  - port: 12111
-    protocol: TCP
-  selector:
-    app: cbi-buildah
 ---
 ## CBI plugin stuff (buildkit)
 apiVersion: apps/v1
@@ -145,7 +163,7 @@ spec:
       containers:
       - name: cbi-buildkit
         image: ${REGISTRY}/cbi-buildkit:${TAG}
-        args: ["-logtostderr", "-v=4", "-buildctl-image=tonistiigi/buildkit", "-buildkitd-addr=tcp://cbi-buildkit-buildkitd:1234"]
+        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-buildctl-image=tonistiigi/buildkit", "-buildkitd-addr=tcp://cbi-buildkit-buildkitd:1234"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111
@@ -180,19 +198,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cbi-buildkit
-  labels:
-    app: cbi-buildkit
-spec:
-  ports:
-  - port: 12111
-    protocol: TCP
-  selector:
-    app: cbi-buildkit
----
-apiVersion: v1
-kind: Service
-metadata:
   name: cbi-buildkit-buildkitd
   labels:
     app: cbi-buildkit-buildkitd
@@ -223,23 +228,10 @@ spec:
       containers:
       - name: cbi-kaniko
         image: ${REGISTRY}/cbi-kaniko:${TAG}
-        args: ["-logtostderr", "-v=4", "-kaniko-image=gcr.io/kaniko-project/executor:latest"]
+        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-kaniko-image=gcr.io/kaniko-project/executor:latest"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: cbi-kaniko
-  labels:
-    app: cbi-kaniko
-spec:
-  ports:
-  - port: 12111
-    protocol: TCP
-  selector:
-    app: cbi-kaniko
 ---
 ## CBID stuff
 apiVersion: apps/v1
@@ -265,4 +257,4 @@ spec:
         args: ["-logtostderr", "-v=4", "-cbi-plugins=cbi-docker,cbi-buildah,cbi-buildkit,cbi-kaniko"]
         imagePullPolicy: Always
 EOF
-echo "generated ${out}"
+echo "generated $o"

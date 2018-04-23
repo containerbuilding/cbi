@@ -36,8 +36,8 @@ spec:
   registry:
     target: ${PUSH_TARGET}
     push: true
-    secretRefs:
-      - name: ${DOCKER_REGISTRY_SECRET}
+    secretRef:
+      name: ${DOCKER_REGISTRY_SECRET}
   language:
     kind: Dockerfile
   context:

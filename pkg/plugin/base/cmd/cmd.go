@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/containerbuilding/cbi/pkg/plugin"
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
+	"github.com/containerbuilding/cbi/pkg/plugin/base"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/service"
 )
 
@@ -29,7 +29,7 @@ type Opts struct {
 	FlagSet *flag.FlagSet
 	Args    []string
 	// CreateBackend is called after calling o.FlagSet.Parse(o.Args).
-	CreateBackend func() (backend.Backend, error)
+	CreateBackend func() (base.Backend, error)
 }
 
 func Main(o Opts) error {

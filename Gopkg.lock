@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/cyphar/filepath-securejoin"
+  packages = ["."]
+  revision = "06bda8370f45268db985f7af15732444d94ed51c"
+  version = "v0.2.1"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "782f4967f2dc4564575ca782fe2d04090b5faca8"
@@ -81,9 +87,27 @@
   revision = "13f86432b882000a51c6e610c620974462691a97"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
+
+[[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
   revision = "4c012f6dcd9546820e378d0bdda4d8fc772cdfea"
+
+[[projects]]
+  name = "github.com/urfave/cli"
+  packages = ["."]
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
 
 [[projects]]
   name = "golang.org/x/crypto"
@@ -395,6 +419,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a2e5be9a660cd3dd253cf27b417bd9dd0723e2b5ebb6d24fa5781e49f10d5813"
+  inputs-digest = "61d68733bd9139c305257253d4d99b9f52c69cbe14b5738dccae27e3961d1534"
   solver-name = "gps-cdcl"
   solver-version = 1

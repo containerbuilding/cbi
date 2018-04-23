@@ -22,25 +22,31 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend/buildkit"
+	"github.com/containerbuilding/cbi/pkg/plugin/backends/buildkit"
+	"github.com/containerbuilding/cbi/pkg/plugin/base"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/cbipluginhelper"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/cmd"
 )
 
 func main() {
 	o := cmd.Opts{
-		// glog installs itself to flag.CommandLine via init()
-		// flag.CommandLine is associated with flag.ExitOnError
+		// glog installs itself to flag.CommandLine via init().
+		// flag.CommandLine is associated with flag.ExitOnError.
 		FlagSet: flag.CommandLine,
 		Args:    os.Args[1:],
 	}
 	var (
+		helperImage   string
 		buildctlImage string
 		buildkitdAddr string
 	)
+	o.FlagSet.StringVar(&helperImage, "helper-image", "", "cbipluginhelper image")
 	o.FlagSet.StringVar(&buildctlImage, "buildctl-image", "", "image used for running buildctl job")
 	o.FlagSet.StringVar(&buildkitdAddr, "buildkitd-addr", "", "buildkitd address (e.g. tcp://service:1234)")
-	o.CreateBackend = func() (backend.Backend, error) {
+	o.CreateBackend = func() (base.Backend, error) {
+		if helperImage == "" {
+			glog.Fatal("no helper-image provided")
+		}
 		if buildctlImage == "" {
 			glog.Fatal("no buildctl-image provided")
 		}
@@ -48,6 +54,10 @@ func main() {
 			glog.Fatal("no buildkitd-addr provided")
 		}
 		b := &buildkit.BuildKit{
+			Helper: cbipluginhelper.Helper{
+				Image:   helperImage,
+				HomeDir: "/root",
+			},
 			BuildctlImage: buildctlImage,
 			BuildkitdAddr: buildkitdAddr,
 		}
