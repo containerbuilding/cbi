@@ -27,11 +27,11 @@ import (
 
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	api "github.com/containerbuilding/cbi/pkg/plugin/api"
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
+	"github.com/containerbuilding/cbi/pkg/plugin/base"
 )
 
 type Service struct {
-	Backend backend.Backend
+	Backend base.Backend
 }
 
 func ServeTCP(s *Service, port int) error {

@@ -22,27 +22,37 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend/docker"
+	"github.com/containerbuilding/cbi/pkg/plugin/backends/docker"
+	"github.com/containerbuilding/cbi/pkg/plugin/base"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/cbipluginhelper"
 	"github.com/containerbuilding/cbi/pkg/plugin/base/cmd"
 )
 
 func main() {
 	o := cmd.Opts{
-		// glog installs itself to flag.CommandLine via init()
-		// flag.CommandLine is associated with flag.ExitOnError
+		// glog installs itself to flag.CommandLine via init().
+		// flag.CommandLine is associated with flag.ExitOnError.
 		FlagSet: flag.CommandLine,
 		Args:    os.Args[1:],
 	}
 	var (
-		image string
+		helperImage string
+		image       string
 	)
+	o.FlagSet.StringVar(&helperImage, "helper-image", "", "cbipluginhelper image")
 	o.FlagSet.StringVar(&image, "docker-image", "", "image with /docker-build-push.sh, used for running docker job")
-	o.CreateBackend = func() (backend.Backend, error) {
+	o.CreateBackend = func() (base.Backend, error) {
+		if helperImage == "" {
+			glog.Fatal("no helper-image provided")
+		}
 		if image == "" {
 			glog.Fatal("no docker-image provided")
 		}
 		b := &docker.Docker{
+			Helper: cbipluginhelper.Helper{
+				Image:   helperImage,
+				HomeDir: "/root",
+			},
 			Image: image,
 		}
 		return b, nil

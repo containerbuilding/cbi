@@ -108,12 +108,23 @@ const (
 
 // Git
 type Git struct {
-	// URL is the docker-style URL.
-	// e.g. `git://example.com/myrepo#mybranch:myfolder`.
-	// See https://docs.docker.com/engine/reference/commandline/build/#git-repositories
+	// URL is defined in `git-clone(1)`.
+	// e.g.
+	// - ssh://[user@]host.xz[:port]/path/to/repo.git/
+	// - [user@]host.xz:path/to/repo.git/
+	//
+	// Implementor's Note: url can be also like `file://`,
+	// although not useful for CBI.
 	URL string `json:"url"`
-	// TODO: add separate fields for host, branch, subdir...
-	// Then we should deprecate this docker-style URL.
+	// Revision such as commit, branch, or tag.
+	// +optional
+	Revision string `json:"revision"`
+	// SubPath within the repo.
+	// +optinal
+	SubPath string `json:"subPath"`
+	// SSHSecretRef contains the contents of ~/.ssh.
+	// +optional
+	SSHSecretRef corev1.LocalObjectReference `json:"sshSecretRef"`
 }
 
 // BuildJobStatus is the status for a BuildJob resource

@@ -24,25 +24,28 @@ import (
 
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
 	pluginapi "github.com/containerbuilding/cbi/pkg/plugin/api"
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend"
-	"github.com/containerbuilding/cbi/pkg/plugin/base/backend/util"
+	"github.com/containerbuilding/cbi/pkg/plugin/base"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/cbipluginhelper"
+	"github.com/containerbuilding/cbi/pkg/plugin/base/registryutil"
 )
 
 type BuildKit struct {
 	BuildctlImage string
 	BuildkitdAddr string
+	Helper        cbipluginhelper.Helper
 }
 
-var _ backend.Backend = &BuildKit{}
+var _ base.Backend = &BuildKit{}
 
 func (b *BuildKit) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
 	res := &pluginapi.InfoResponse{
 		Labels: map[string]string{
 			pluginapi.LPluginName:         "buildkit",
 			pluginapi.LLanguageDockerfile: "",
-			pluginapi.LContextGit:         "",
-			pluginapi.LContextConfigMap:   "",
 		},
+	}
+	for k, v := range cbipluginhelper.Labels {
+		res.Labels[k] = v
 	}
 	return res, nil
 }
@@ -78,22 +81,23 @@ func (b *BuildKit) CreatePodTemplateSpec(ctx context.Context, buildJob crd.Build
 	}
 	podSpec := b.commonPodSpec(buildJob)
 	if buildJob.Spec.Registry.Push && buildJob.Spec.Registry.SecretRef.Name != "" {
-		util.InjectRegistrySecret(&podSpec, 0, "/root", buildJob.Spec.Registry.SecretRef)
+		if err := registryutil.InjectRegistrySecret(&podSpec, 0, "/root", buildJob.Spec.Registry.SecretRef); err != nil {
+			return nil, err
+		}
 	}
-	switch k := buildJob.Spec.Context.Kind; k {
-	case crd.ContextKindGit:
-		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
-			"--frontend-opt", "context=" + buildJob.Spec.Context.Git.URL,
-		}...)
-	case crd.ContextKindConfigMap:
-		volMountPath := util.InjectConfigMap(&podSpec, 0, buildJob.Spec.Context.ConfigMapRef)
-		podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
-			"--local", "context=" + volMountPath,
-			"--local", "dockerfile=" + volMountPath,
-		}...)
-	default:
-		return nil, fmt.Errorf("unsupported Spec.Context: %v", k)
+	injector := cbipluginhelper.ContextInjector{
+		Helper:        b.Helper,
+		TargetPodSpec: &podSpec,
 	}
+	// TODO: allow BuildKit-native git access (with ssh key)
+	volMountPath, err := injector.Inject(buildJob.Spec.Context)
+	if err != nil {
+		return nil, err
+	}
+	podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
+		"--local", "context=" + volMountPath,
+		"--local", "dockerfile=" + volMountPath,
+	}...)
 	return &corev1.PodTemplateSpec{
 		Spec: podSpec,
 	}, nil

@@ -19,29 +19,21 @@ with support for several backends such as [Docker](https://www.docker.com), [img
 Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 --- | --- | --- | ---
 [Docker](https://www.docker.com) | Yes ✅| |
-[img](https://github.com/genuinetools/img) | Planned | |
 [BuildKit](https://github.com/moby/buildkit) | Yes ✅| Planned? (TBD) | Planned
 [Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | |
-[OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | |
-[Orca](https://github.com/cyphar/orca-build) | Planned | |
-[Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |
 [kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Yes ✅ | |
 
-Plugin | Support Git context | Support ConfigMap Context | Support BuildKitSession Context
---- | --- | --- | ---
-[Docker](https://www.docker.com) | Yes ✅| Yes ✅ | Planned
-[img](https://github.com/genuinetools/img) | Planned | Planned |
-[BuildKit](https://github.com/moby/buildkit) | Yes ✅| Yes ✅ | Planned
-[Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | Yes ✅ |
-[OpenShift Image Builder](https://github.com/openshift/imagebuilder) | Planned | Planned |
-[Orca](https://github.com/cyphar/orca-build) | Planned | Planned |
-[Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Planned | Planned |
-[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Planned | Yes ✅ |
-
-
-Please feel free to open PRs to add other plugins.
+* Planned: [img](https://github.com/genuinetools/img), [Google Cloud Container Builder](https://cloud.google.com/container-builder/), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
 
 <!-- TODO: figure out possibility for supporting Bazel, OpenShift S2I, Singularity... -->
+
+
+* Context providers (all plugins above implements these basic context providers via [`cmd/cbipluginhelper`](cmd/cbipluginhelper).)
+    * ConfigMap
+    * Git, with support for SSH secret
+    * Planned: BuildKitSession, S3, GCS, Swift, "Flex", ...
+
+Please feel free to open PRs to add other plugins.
 
 ## Quick start
 
@@ -65,14 +57,14 @@ This command performs:
 
 By default, the following plugins will be installed:
 
-* Docker (Default)
-    * requires Docker to be installed on the hosts
-* Buildah
-    * requires privileged containers to be enabled
-* BuildKit
-    * requires privileged containers to be enabled
+Plugin   | Note
+---      | ---
+Docker (highest priority)   | Docker needs to be installed on the hosts
+Buildah  | Privileged containers needs to be enabled
+BuildKit | Privileged containers needs to be enabled
+kaniko   | N/A
 
-You may execute `kubectl edit deployment cbid` to remove unneeded plugins or change the default one.
+You may execute `kubectl edit deployment cbid` to remove unneeded plugins or change the priorities.
 
 ### Run your first `buildjob`
 
@@ -122,6 +114,34 @@ metadata:
 spec:
   pluginSelector: plugin.name=buildah
   ...
+```
+
+#### Secrets
+
+e.g.
+
+```yaml
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex
+spec:
+  registry:
+    target: example.com/foo/bar:baz
+    push: true
+# `kubectl create secret docker-registry ...`
+    secretRef:
+      name: docker-registry-secret-name
+  language:
+    kind: Dockerfile
+  context:
+    kind: git
+    git:
+      url: ssh://me@git.example.com/foo/bar.git
+# `kubectl create secret generic ssh-secret-name --from-file=id_rsa=$HOME/.ssh/id_rsa --from-file=config=$HOME/.ssh/config --from-file=known_hosts=$HOME/.ssh/known_hosts`
+      sshSecretRef:
+        name: ssh-secret-name
+
 ```
 
 #### Large context  (*UNIMPLEMENTED YET*):
