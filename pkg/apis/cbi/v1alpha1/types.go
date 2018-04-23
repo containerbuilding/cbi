@@ -70,10 +70,9 @@ type Registry struct {
 	// Can be set to false, especially for testing purposes.
 	// +optional
 	Push bool `json:"push"`
-	// SecretRefs used for pushing and pulling.
-	// Most plugin implementations would only accept a single entry.
+	// SecretRef used for pushing and pulling.
 	// +optional
-	SecretRefs []corev1.LocalObjectReference `json:"secretRefs"`
+	SecretRef corev1.LocalObjectReference `json:"secretRef"`
 }
 
 // Language specifies the language.

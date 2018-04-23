@@ -110,11 +110,8 @@ func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJ
 		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
 	}
 	podSpec := b.commonPodSpec(buildJob)
-	if buildJob.Spec.Registry.Push {
-		if len(buildJob.Spec.Registry.SecretRefs) != 1 {
-			return nil, fmt.Errorf("expected 1 Spec.Registry.SecretRefs, got %d", len(buildJob.Spec.Registry.SecretRefs))
-		}
-		util.InjectRegistrySecret(&podSpec, 0, "/root", buildJob.Spec.Registry.SecretRefs[0])
+	if buildJob.Spec.Registry.Push && buildJob.Spec.Registry.SecretRef.Name != "" {
+		util.InjectRegistrySecret(&podSpec, 0, "/root", buildJob.Spec.Registry.SecretRef)
 	}
 	switch k := buildJob.Spec.Context.Kind; k {
 	case crd.ContextKindGit:
