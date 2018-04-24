@@ -23,4 +23,4 @@ DIND_INSECURE_REGISTRIES="[\"${CBI_REGISTRY}:5000\"]" DIND_DAEMON_JSON_FILE=/dev
 docker run -d --network ${DIND_NET} --name ${CBI_REGISTRY} ${CBI_REGISTRY_IMAGE}
 
 # Add bootstrap docker to the network, and expose the port
-docker run -d --privileged --network ${DIND_NET} --name ${CBI_BOOTSTRAP_DOCKER} -p ${CBI_BOOTSTRAP_DOCKER_EXPOSE}:2375 ${CBI_BOOTSTRAP_DOCKER_IMAGE} --insecure-registry=${CBI_REGISTRY}:5000
+docker run -d --privileged --network ${DIND_NET} --name ${CBI_BOOTSTRAP_DOCKER} -p ${CBI_BOOTSTRAP_DOCKER_EXPOSE}:2375 ${CBI_BOOTSTRAP_DOCKER_IMAGE} --insecure-registry=${CBI_REGISTRY}:5000  --experimental

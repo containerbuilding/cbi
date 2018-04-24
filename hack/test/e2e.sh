@@ -33,7 +33,7 @@ function e2e(){
     echo "travis_fold:start:${ex}-${plugin}"
     echo "========== Testing ${ex} using ${plugin} plugin =========="
     # create a BuildJob
-    (cat artifacts/examples/${ex}.yaml; echo "  pluginSelector: plugin.name=${plugin}") | kubectl create -f -
+    (cat examples/${ex}.yaml; echo "  pluginSelector: plugin.name=${plugin}") | kubectl create -f -
     jobname=${ex}-job
     # wait for the underlying job
     pod=

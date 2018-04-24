@@ -68,9 +68,9 @@ You may execute `kubectl edit deployment cbid` to remove unneeded plugins or cha
 
 ### Run your first `buildjob`
 
-Create a buildjob `ex-git-nopush` from [`artifacts/examples/ex-git-nopush.yaml`](artifacts/examples/ex-git-nopush.yaml):
+Create a buildjob `ex-git-nopush` from [`examples/ex-git-nopush.yaml`](examples/ex-git-nopush.yaml):
 ```console
-$ kubectl create -f artifacts/examples/ex-git-nopush.yaml
+$ kubectl create -f examples/ex-git-nopush.yaml
 buildjob "ex-git-nopush" created
 ```
 

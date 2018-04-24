@@ -1,12 +1,10 @@
-FROM golang:1.10 AS compile
+FROM golang:1.10-alpine AS compile
 COPY . /go/src/github.com/containerbuilding/cbi
 WORKDIR /go/src/github.com/containerbuilding/cbi
-# We can't build them statically, as glog depends on os/user.
-# See https://github.com/moby/moby/pull/29478 for the os/user issue.
-RUN for f in $(find ./cmd -mindepth 1 -maxdepth 1 -type d -printf '%f\n'); \
-  do echo $f; go build -o /$f github.com/containerbuilding/cbi/cmd/$f; done
+RUN for f in cmd/* ; \
+  do echo $f; go build -o /$(basename $f) github.com/containerbuilding/cbi/$f; done
 
-FROM debian:9-slim AS base
+FROM alpine:3.7 AS base
 
 ### CBI Controller
 FROM base AS cbid
@@ -15,7 +13,7 @@ ENTRYPOINT ["/cbid"]
 
 ### CBI Common Plugin Helper
 FROM base AS cbipluginhelper
-RUN apt update && apt install -y -q git openssh-client
+RUN apk add --no-cache git openssh-client
 COPY --from=compile /cbipluginhelper /cbipluginhelper
 ENTRYPOINT ["/cbipluginhelper", "--debug"]
 
@@ -24,7 +22,7 @@ FROM base AS cbi-docker
 COPY --from=compile /cbi-docker /cbi-docker
 ENTRYPOINT ["/cbi-docker"]
 
-FROM docker:17.09 AS cbi-docker-docker
+FROM docker:18.03 AS cbi-docker-docker
 ADD artifacts/dockerfile.d/docker-build-push.sh /
 
 ### Buildah
@@ -47,5 +45,5 @@ COPY --from=compile /cbi-kaniko /cbi-kaniko
 ENTRYPOINT ["/cbi-kaniko"]
 
 ### Dummy
-FROM alpine
+FROM base
 CMD echo 'nothing defined here, specify the target via `docker build --target`.'; false
