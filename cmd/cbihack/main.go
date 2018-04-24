@@ -27,8 +27,8 @@ import (
 func main() {
 	debug := false
 	app := &cli.App{}
-	app.Name = "cbipluginhelper"
-	app.Usage = "Don't call this manually"
+	app.Name = "cbihack"
+	app.Usage = "Used by `make`. Not designed to be called manually."
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
 			Name:        "debug",
@@ -37,7 +37,7 @@ func main() {
 		},
 	}
 	app.Commands = []*cli.Command{
-		populateGitCommand,
+		generateManifests,
 	}
 	app.Before = func(context *cli.Context) error {
 		if debug {

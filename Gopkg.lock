@@ -104,12 +104,6 @@
   revision = "4c012f6dcd9546820e378d0bdda4d8fc772cdfea"
 
 [[projects]]
-  name = "github.com/urfave/cli"
-  packages = ["."]
-  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
-  version = "v1.20.0"
-
-[[projects]]
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   revision = "49796115aa4b964c318aad4f3084fdb41e9aa067"
@@ -198,6 +192,12 @@
   version = "v0.9.0"
 
 [[projects]]
+  branch = "v2"
+  name = "gopkg.in/urfave/cli.v2"
+  packages = ["."]
+  revision = "d3ae77c26ac8db90639677e4831a728d33c36111"
+
+[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "670d4cfef0544295bc27a114dbac37980d83185a"
@@ -235,6 +235,15 @@
     "storage/v1beta1"
   ]
   revision = "7e796de92438aede7cb5d6bcf6c10f4fa65db560"
+
+[[projects]]
+  branch = "master"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1"
+  ]
+  revision = "8cd0c4976f7b2d18177873eed93d0fe3b242de4b"
 
 [[projects]]
   name = "k8s.io/apimachinery"
@@ -419,6 +428,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "61d68733bd9139c305257253d4d99b9f52c69cbe14b5738dccae27e3961d1534"
+  inputs-digest = "f9dcc9723e4c62c0060916f800129f53eec57f56b15086c55207e371e585f352"
   solver-name = "gps-cdcl"
   solver-version = 1

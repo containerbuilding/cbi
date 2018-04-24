@@ -36,5 +36,6 @@ for t in $((cd artifacts; ls Dockerfile.*) | sed -e s/Dockerfile\.//g); do
 done
 
 # Generate and apply the manifest
-./artifacts/cbi.yaml.sh ${REGISTRY} ${TAG}
-kubectl apply -f./artifacts/cbi.generated.yaml 
+yaml="./artifacts/cbi.generated.yaml "
+go run ./cmd/cbihack/*.go generate-manifests ${REGISTRY} ${TAG} > ${yaml}
+kubectl apply -f ${yaml}
