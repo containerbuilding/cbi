@@ -21,15 +21,15 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v2"
 )
 
-var populateGitCommand = cli.Command{
+var populateGitCommand = &cli.Command{
 	Name:      "populate-git",
 	Usage:     "populate git. Requires git and ssh to be installed.",
 	ArgsUsage: "[flags] REPO-URL DIRECTORY",
 	Flags: []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "revision",
 			Usage: "Revision. e.g. master",
 		},
