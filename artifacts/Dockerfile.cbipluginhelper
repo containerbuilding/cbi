@@ -1,0 +1,8 @@
+FROM golang:1.10-alpine AS compile
+COPY . /go/src/github.com/containerbuilding/cbi
+RUN go build -ldflags="-s -w" -o /cbipluginhelper github.com/containerbuilding/cbi/cmd/cbipluginhelper
+
+FROM alpine:3.7
+RUN apk add --no-cache git openssh-client
+COPY --from=compile /cbipluginhelper /cbipluginhelper
+ENTRYPOINT ["/cbipluginhelper", "--debug"]

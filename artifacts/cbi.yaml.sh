@@ -113,7 +113,7 @@ spec:
       containers:
       - name: cbi-docker
         image: ${REGISTRY}/cbi-docker:${TAG}
-        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-docker-image=${REGISTRY}/cbi-docker-docker:${TAG}"]
+        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-docker-image=${REGISTRY}/docker:${TAG}"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111
@@ -138,7 +138,7 @@ spec:
       containers:
       - name: cbi-buildah
         image: ${REGISTRY}/cbi-buildah:${TAG}
-        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-buildah-image=${REGISTRY}/cbi-buildah-buildah:${TAG}"]
+        args: ["-logtostderr", "-v=4", "-helper-image=${REGISTRY}/cbipluginhelper:${TAG}", "-buildah-image=${REGISTRY}/buildah:${TAG}"]
         imagePullPolicy: Always
         ports:
         - containerPort: 12111

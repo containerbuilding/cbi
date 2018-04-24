@@ -30,13 +30,8 @@ if [[ `docker info --format '{{json .ExperimentalBuild}}'` = true ]]; then
 fi
 
 # Build images
-for t in cbid \
-             cbipluginhelper \
-             cbi-docker cbi-docker-docker \
-             cbi-buildah cbi-buildah-buildah \
-             cbi-buildkit \
-             cbi-kaniko; do
-    docker build -t ${REGISTRY}/${t}:${TAG} --target ${t} -f artifacts/Dockerfile ${DOCKER_BUILD_FLAGS} .
+for t in $((cd artifacts; ls Dockerfile.*) | sed -e s/Dockerfile\.//g); do
+    docker build -t ${REGISTRY}/${t}:${TAG} -f artifacts/Dockerfile.${t} ${DOCKER_BUILD_FLAGS} .
     docker push ${REGISTRY}/${t}:${TAG}
 done
 

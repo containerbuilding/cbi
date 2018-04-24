@@ -1,0 +1,2 @@
+FROM docker:18.03
+ADD artifacts/dockerfile.d/docker-build-push.sh /
