@@ -48,12 +48,12 @@ $ ./hack/build/build-push-apply.sh your-registry.example.com:5000/cbi test201805
 This command performs:
 
 * Build and push CBI images as `your-registry.example.com:5000/cbi/{cbid,cbi-docker,...}:test20180501`
-* Generate `artifacts/cbi.generated.yaml` so that the manifest uses the images on `your-registry.example.com:5000/cbi/{cbid,cbi-docker,...}:test20180501`.
+* Generate `/tmp/cbi.generated.yaml` so that the manifest uses the images on `your-registry.example.com:5000/cbi/{cbid,cbi-docker,...}:test20180501`.
     * `CustomResourceDefinition`: `BuildJob`
     * `ServiceAccount`: `cbi`
     * `ClusterRoleBinding`: `cbi`
     * `Deployment`: `cbid`, `cbi-docker`, ...
-* Execute `kubectl apply -f artifacts/cbi.generated.yaml`.
+* Execute `kubectl apply -f /tmp/cbi.generated.yaml`.
 
 By default, the following plugins will be installed:
 

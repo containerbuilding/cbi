@@ -30,12 +30,12 @@ if [[ `docker info --format '{{json .ExperimentalBuild}}'` = true ]]; then
 fi
 
 # Build images
-for t in $((cd artifacts; ls Dockerfile.*) | sed -e s/Dockerfile\.//g); do
-    docker build -t ${REGISTRY}/${t}:${TAG} -f artifacts/Dockerfile.${t} ${DOCKER_BUILD_FLAGS} .
+for t in $((cd hack/dockerfiles; ls Dockerfile.*) | sed -e s/Dockerfile\.//g); do
+    docker build -t ${REGISTRY}/${t}:${TAG} -f hack/dockerfiles/Dockerfile.${t} ${DOCKER_BUILD_FLAGS} .
     docker push ${REGISTRY}/${t}:${TAG}
 done
 
 # Generate and apply the manifest
-yaml="./artifacts/cbi.generated.yaml "
+yaml="/tmp/cbi.generated.yaml "
 go run ./cmd/cbihack/*.go generate-manifests ${REGISTRY} ${TAG} > ${yaml}
 kubectl apply -f ${yaml}
