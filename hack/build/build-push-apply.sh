@@ -21,6 +21,14 @@ fi
 
 cd $(dirname $0)/../..
 
+DOCKER_BUILD_FLAGS=
+
+# TODO: compare version as well
+if [[ `docker info --format '{{json .ExperimentalBuild}}'` = true ]]; then
+    export BUILD_STREAM_PROTOCOL=diffcopy
+    DOCKER_BUILD_FLAGS="--stream"
+fi
+
 # Build images
 for t in cbid \
              cbipluginhelper \
@@ -28,7 +36,7 @@ for t in cbid \
              cbi-buildah cbi-buildah-buildah \
              cbi-buildkit \
              cbi-kaniko; do
-    docker build -t ${REGISTRY}/${t}:${TAG} --target ${t} -f artifacts/Dockerfile .
+    docker build -t ${REGISTRY}/${t}:${TAG} --target ${t} -f artifacts/Dockerfile ${DOCKER_BUILD_FLAGS} .
     docker push ${REGISTRY}/${t}:${TAG}
 done
 
