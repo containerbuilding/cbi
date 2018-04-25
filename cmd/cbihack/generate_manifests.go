@@ -88,8 +88,9 @@ func generateManifestsAction(clicontext *cli.Context) error {
 		var args func() []string
 		switch p {
 		case "docker":
+			dockerImage := "docker:18.03"
 			args = func() []string {
-				return []string{fmt.Sprintf("-docker-image=%s/docker:%s", registry, tag)}
+				return []string{"-docker-image=" + dockerImage}
 			}
 		case "buildkit":
 			buildkitImage := "tonistiigi/buildkit:latest"

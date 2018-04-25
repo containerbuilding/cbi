@@ -1,2 +1,0 @@
-FROM docker:18.03
-ADD hack/dockerfiles/docker-build-push.sh /

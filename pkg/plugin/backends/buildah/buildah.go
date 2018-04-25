@@ -60,10 +60,10 @@ func (b *Buildah) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 		RestartPolicy: corev1.RestartPolicyNever,
 		Containers: []corev1.Container{
 			{
-				Name:  "buildah-job",
-				Image: b.Image,
+				Name:    "buildah-job",
+				Image:   b.Image,
 				Command: []string{
-					"/docker-build-push.sh",
+					// needs to be "docker-build-push.sh", not buildah itself.
 				},
 				Env: []corev1.EnvVar{
 					{
@@ -118,16 +118,24 @@ func (b *Buildah) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJ
 			return nil, err
 		}
 	}
-	injector := cbipluginhelper.ContextInjector{
+	injector := cbipluginhelper.Injector{
 		Helper:        b.Helper,
 		TargetPodSpec: &podSpec,
 	}
-	volMountPath, err := injector.Inject(buildJob.Spec.Context)
+	dbpPath, err := injector.InjectFile("/docker-build-push.sh")
+	if err != nil {
+		return nil, err
+	}
+	podSpec.Containers[0].Command = []string{dbpPath}
+	ctxInjector := cbipluginhelper.ContextInjector{
+		Injector: injector,
+	}
+	ctxPath, err := ctxInjector.Inject(buildJob.Spec.Context)
 	if err != nil {
 		return nil, err
 	}
 	podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
-		volMountPath,
+		ctxPath,
 	}...)
 	return &corev1.PodTemplateSpec{
 		Spec: podSpec,

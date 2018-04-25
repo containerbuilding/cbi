@@ -17,7 +17,10 @@ limitations under the License.
 package cbipluginhelper
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"path/filepath"
 
 	"github.com/cyphar/filepath-securejoin"
 	corev1 "k8s.io/api/core/v1"
@@ -26,16 +29,68 @@ import (
 	pluginapi "github.com/containerbuilding/cbi/pkg/plugin/api"
 )
 
+func genRandomString() string {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(b)
+}
+
 type Helper struct {
 	Image   string
 	HomeDir string
 }
 
-// ContextInjector injects build contexts using `cbipluginhelper` image.
-type ContextInjector struct {
+// Injector injects files using `cbipluginhelper` image.
+type Injector struct {
 	Helper
 	TargetPodSpec      *corev1.PodSpec
 	TargetContainerIdx int
+}
+
+// InjectFile injects a file from the helper image into podSpec and returns the injected path
+func (ci *Injector) InjectFile(srcPath string) (string, error) {
+	volName := "cbi-file-" + genRandomString()
+	volMountPath := "/" + volName
+	initContainerName := "cbi-init-" + volName
+	idx := ci.TargetContainerIdx
+	vol := corev1.Volume{
+		Name: volName,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	}
+	ci.TargetPodSpec.Volumes = append(ci.TargetPodSpec.Volumes, vol)
+	ci.TargetPodSpec.Containers[idx].VolumeMounts = append(ci.TargetPodSpec.Containers[idx].VolumeMounts,
+		corev1.VolumeMount{
+			Name:      volName,
+			MountPath: volMountPath,
+		},
+	)
+	targetPath, err := securejoin.SecureJoin(volMountPath, filepath.Base(srcPath))
+	if err != nil {
+		return "", err
+	}
+	initContainer := corev1.Container{
+		Name:    initContainerName,
+		Image:   ci.Helper.Image,
+		Command: []string{"cp", "-rL", srcPath, targetPath},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      volName,
+				MountPath: volMountPath,
+			},
+		},
+	}
+	ci.TargetPodSpec.InitContainers = append(ci.TargetPodSpec.InitContainers, initContainer)
+	return targetPath, nil
+}
+
+// ContextInjector injects build contexts using `cbipluginhelper` image.
+type ContextInjector struct {
+	Injector
 }
 
 // Inject injects a context to podSpec and returns the context path

@@ -1,3 +1,2 @@
 FROM fedora:rawhide
 RUN dnf install -y buildah && dnf clean all
-ADD hack/dockerfiles/docker-build-push.sh /
