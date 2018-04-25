@@ -30,8 +30,8 @@ if [[ `docker info --format '{{json .ExperimentalBuild}}'` = true ]]; then
 fi
 
 # Build images
-for t in $((cd hack/dockerfiles; ls Dockerfile.*) | sed -e s/Dockerfile\.//g); do
-    docker build -t ${REGISTRY}/${t}:${TAG} -f hack/dockerfiles/Dockerfile.${t} ${DOCKER_BUILD_FLAGS} .
+for t in $(ls Dockerfile.* | sed -e s/Dockerfile\.//g); do
+    docker build -t ${REGISTRY}/${t}:${TAG} -f Dockerfile.${t} ${DOCKER_BUILD_FLAGS} .
     docker push ${REGISTRY}/${t}:${TAG}
 done
 
