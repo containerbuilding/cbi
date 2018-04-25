@@ -26,6 +26,15 @@ cd $(dirname $0)/../..
 tag="test-$(date +%s)"
 ./hack/build/build-push-apply.sh ${REGISTRY} ${tag}
 
+until kubectl get crd buildjobs.cbi.containerbuilding.github.io; do
+    sleep 10
+done
+# cargo-cult extra sleep for avoiding `unable to recognize "STDIN": no matches for cbi.containerbuilding.github.io/, Kind=BuildJob`
+sleep 10
+until kubectl get buildjobs; do
+    sleep 10
+done
+
 # TODO: move to golang
 function e2e(){
     local ex=$1
