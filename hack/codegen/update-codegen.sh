@@ -42,3 +42,6 @@ ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
     cd ${SCRIPT_ROOT}/pkg/plugin/api
     go generate .
 )
+
+# generate cbi-latest.yaml
+go run cmd/cbihack/*.go generate-manifests containerbuilding latest > cbi-latest.yaml
