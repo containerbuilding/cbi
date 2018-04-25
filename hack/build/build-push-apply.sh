@@ -29,11 +29,30 @@ if [[ `docker info --format '{{json .ExperimentalBuild}}'` = true ]]; then
     DOCKER_BUILD_FLAGS="--stream"
 fi
 
-# Build images
-for t in $(ls Dockerfile.* | sed -e s/Dockerfile\.//g); do
-    docker build -t ${REGISTRY}/${t}:${TAG} -f Dockerfile.${t} ${DOCKER_BUILD_FLAGS} .
+build() {
+    t="$1"
+    docker build -q -t ${REGISTRY}/${t}:${TAG} -f Dockerfile.${t} ${DOCKER_BUILD_FLAGS} .
+}
+
+push() {
+    t="$1"
     docker push ${REGISTRY}/${t}:${TAG}
+}
+
+buildpush() {
+    build $@
+    push $@
+}
+
+# Build cbid image
+build cbid
+push cbid &
+
+# Build rest images in parallel, after the first build gets completed, so as to exploit cache.
+for t in $(ls Dockerfile.* | grep -v cbid | sed -e s/Dockerfile\.//g); do
+    buildpush $t &
 done
+wait
 
 # Generate and apply the manifest
 yaml="/tmp/cbi.generated.yaml "
