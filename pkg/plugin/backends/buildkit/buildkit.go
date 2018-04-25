@@ -85,18 +85,21 @@ func (b *BuildKit) CreatePodTemplateSpec(ctx context.Context, buildJob crd.Build
 			return nil, err
 		}
 	}
-	injector := cbipluginhelper.ContextInjector{
+	injector := cbipluginhelper.Injector{
 		Helper:        b.Helper,
 		TargetPodSpec: &podSpec,
 	}
+	ctxInjector := cbipluginhelper.ContextInjector{
+		Injector: injector,
+	}
 	// TODO: allow BuildKit-native git access (with ssh key)
-	volMountPath, err := injector.Inject(buildJob.Spec.Context)
+	ctxPath, err := ctxInjector.Inject(buildJob.Spec.Context)
 	if err != nil {
 		return nil, err
 	}
 	podSpec.Containers[0].Command = append(podSpec.Containers[0].Command, []string{
-		"--local", "context=" + volMountPath,
-		"--local", "dockerfile=" + volMountPath,
+		"--local", "context=" + ctxPath,
+		"--local", "dockerfile=" + ctxPath,
 	}...)
 	return &corev1.PodTemplateSpec{
 		Spec: podSpec,
