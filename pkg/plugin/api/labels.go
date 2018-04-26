@@ -44,4 +44,10 @@ const (
 	//
 	// Value SHOULD be empty.
 	LContextConfigMap = "context.configmap"
+
+	// LContextHTTP SHOULD be present if the plugin accepts a BuildJob
+	// with Context.Kind = ContextKindHTTP
+	//
+	// Value SHOULD be empty.
+	LContextHTTP = "context.http"
 )
