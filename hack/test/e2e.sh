@@ -66,7 +66,7 @@ function e2e(){
 }
 
 # NOTE: no test for kaniko, because it always requires pushing at the moment.
-for f in docker buildkit buildah; do
+for f in docker buildkit buildah img; do
     e2e ex-git-nopush $f
     e2e ex-http-nopush $f
     e2e ex-configmap-nopush $f

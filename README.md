@@ -22,8 +22,9 @@ Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 [BuildKit](https://github.com/moby/buildkit) | Yes ✅| Planned? (TBD) | Planned
 [Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | |
 [kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Yes ✅ | |
+[img](https://github.com/genuinetools/img) | Yes ✅ | |
 
-* Planned: [img](https://github.com/genuinetools/img), [Google Cloud Container Builder](https://cloud.google.com/container-builder/), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
+* Planned: [Google Cloud Container Builder](https://cloud.google.com/container-builder/), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
 
 <!-- TODO: figure out possibility for supporting Bazel, OpenShift S2I, Singularity... -->
 
@@ -54,6 +55,7 @@ Docker (highest priority)   | Docker needs to be installed on the hosts
 Buildah  | Privileged containers needs to be enabled
 BuildKit | Privileged containers needs to be enabled
 kaniko   | N/A
+img      | Privileged containers needs to be enabled (See [`kubernetes/community#1934`](https://github.com/kubernetes/community/pull/1934) and [Jess's blog](https://blog.jessfraz.com/post/building-container-images-securely-on-kubernetes/) for the ongoing work to remove this requirement)
 
 You may edit the YAML file to remove unneeded plugins or change the priorities.
 
