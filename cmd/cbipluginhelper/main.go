@@ -38,6 +38,7 @@ func main() {
 	}
 	app.Commands = []*cli.Command{
 		populateGitCommand,
+		populateHTTPCommand,
 	}
 	app.Before = func(context *cli.Context) error {
 		if debug {

@@ -100,6 +100,8 @@ func (ci *ContextInjector) Inject(bjContext crd.Context) (string, error) {
 		return ci.injectConfigMap(bjContext.ConfigMapRef)
 	case crd.ContextKindGit:
 		return ci.injectGit(bjContext.Git)
+	case crd.ContextKindHTTP:
+		return ci.injectHTTP(bjContext.HTTP)
 	default:
 		return "", fmt.Errorf("unsupported Spec.Context: %v", k)
 	}
@@ -230,7 +232,55 @@ func (ci *ContextInjector) injectGit(spec crd.Git) (string, error) {
 	return contextPath, nil
 }
 
+// injectHTTP injects a tar archive on HTTP site to podSpec and returns the context path
+func (ci *ContextInjector) injectHTTP(spec crd.HTTP) (string, error) {
+	const (
+		// vol is an emptyDir volume
+		volName           = "cbi-httpcontext"
+		volMountPath      = "/cbi-httpcontext"
+		volContextSubpath = "context"
+		initContainerName = "cbi-httpcontext-init"
+	)
+	idx := ci.TargetContainerIdx
+
+	ci.TargetPodSpec.Volumes = append(ci.TargetPodSpec.Volumes, corev1.Volume{
+		Name: volName,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	})
+	ci.TargetPodSpec.Containers[idx].VolumeMounts = append(ci.TargetPodSpec.Containers[idx].VolumeMounts,
+		corev1.VolumeMount{
+			Name:      volName,
+			MountPath: volMountPath,
+		},
+	)
+
+	contextPath, _ := securejoin.SecureJoin(volMountPath, volContextSubpath)
+	initContainer := corev1.Container{
+		Name:  initContainerName,
+		Image: ci.Helper.Image,
+		Args:  []string{"populate-http", spec.URL, contextPath},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      volName,
+				MountPath: volMountPath,
+			},
+		},
+	}
+	ci.TargetPodSpec.InitContainers = append(ci.TargetPodSpec.InitContainers, initContainer)
+	if spec.SubPath != "" {
+		var err error
+		contextPath, err = securejoin.SecureJoin(contextPath, spec.SubPath)
+		if err != nil {
+			return "", err
+		}
+	}
+	return contextPath, nil
+}
+
 var Labels = map[string]string{
 	pluginapi.LContextConfigMap: "",
 	pluginapi.LContextGit:       "",
+	pluginapi.LContextHTTP:      "",
 }

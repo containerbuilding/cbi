@@ -31,6 +31,7 @@ Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 * Context providers (all plugins above implements these basic context providers via [`cmd/cbipluginhelper`](cmd/cbipluginhelper).)
     * ConfigMap
     * Git, with support for SSH secret
+    * HTTP(S)
     * Planned: BuildKitSession, S3, GCS, Swift, "Flex", ...
 
 Please feel free to open PRs to add other plugins.
@@ -134,14 +135,36 @@ spec:
 
 ```
 
-#### Large context  (*UNIMPLEMENTED YET*):
+#### Sending large context via HTTP
 
-To send a large build context using [BuildKit session gRPC](https://github.com/moby/buildkit/blob/9f6d9a9e78f18b2ffc6bc4f211092722685cc853/session/filesync/filesync.proto), with support for diffcopy
-
+First, you need to upload the context to a HTTP server such as nginx:
 ```console
-$ go get github.com/containerbuilding/cbi/cmd/cbictl
-$ cbictl build -t your-registry.example.com/foo/bar:baz --push .
+$ kubectl run nginx --image nginx:alpine --port 80
+$ kubectl expose deployment nginx
+$ tar cvf a.tar /path/to/your-context-directory
+$ kubectl cp a.tar $(kubectl get pod -l run=nginx -o jsonpath={..metadata.name}):/usr/share/nginx/html
 ```
+
+Then you can specify HTTP context provider as follows:
+
+```yaml
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex
+spec:
+  registry:
+    target: example.com/foo/bar:baz
+    push: false
+  language:
+    kind: Dockerfile
+  context:
+    kind: HTTP
+    http:
+      url: http://nginx/a.tar
+```
+
+Also, support for [BuildKit session gRPC](https://github.com/moby/buildkit/blob/9f6d9a9e78f18b2ffc6bc4f211092722685cc853/session/filesync/filesync.proto) (with diffcopy) is planned.
 
 ## Design (subject to change)
 

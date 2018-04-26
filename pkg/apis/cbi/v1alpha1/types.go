@@ -92,6 +92,7 @@ type Context struct {
 	Kind         string                      `json:"kind"`
 	Git          Git                         `json:"git"`
 	ConfigMapRef corev1.LocalObjectReference `json:"configMapRef"`
+	HTTP         HTTP                        `json:"http"`
 }
 
 const (
@@ -104,6 +105,11 @@ const (
 	// When BuildJob.Context.Kind is set to ContextKindConfigMap, the controller
 	// MUST add "context.configmap" to its default plugin selector logic.
 	ContextKindConfigMap = "ConfigMap"
+
+	// ContextKindHTTP stands for HTTP(S) context.
+	// When BuildJob.Context.Kind is set to ContextKindHTTP, the controller
+	// MUST add "context.http" to its default plugin selector logic.
+	ContextKindHTTP = "HTTP"
 )
 
 // Git
@@ -125,6 +131,20 @@ type Git struct {
 	// SSHSecretRef contains the contents of ~/.ssh.
 	// +optional
 	SSHSecretRef corev1.LocalObjectReference `json:"sshSecretRef"`
+}
+
+// HTTP
+type HTTP struct {
+	// URL for a tar archive.
+	// URL MUST be http:// or https:// .
+	// Implementations SHOULD accept tar+gz.
+	URL string `json:"url"`
+	// TODO: add mediatype
+	// TODO: add TLS stuff
+	//
+	// SubPath within the archive.
+	// +optinal
+	SubPath string `json:"subPath"`
 }
 
 // BuildJobStatus is the status for a BuildJob resource

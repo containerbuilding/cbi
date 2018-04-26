@@ -65,14 +65,10 @@ function e2e(){
     echo "travis_fold:end:${ex}-${plugin}"
 }
 
-# ex-git-nopush: git context
-e2e ex-git-nopush docker
-e2e ex-git-nopush buildkit
-e2e ex-git-nopush buildah
-
-# ex-configmap-nopush: configmap context
 # NOTE: no test for kaniko, because it always requires pushing at the moment.
 for f in docker buildkit buildah; do
+    e2e ex-git-nopush $f
+    e2e ex-http-nopush $f
     e2e ex-configmap-nopush $f
     kubectl delete configmap ex-configmap-nopush-configmap
 done
