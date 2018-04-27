@@ -48,6 +48,7 @@ func defaultRequirements(bj crd.BuildJob) ([]labels.Requirement, error) {
 		crd.ContextKindGit:       api.LContextGit,
 		crd.ContextKindConfigMap: api.LContextConfigMap,
 		crd.ContextKindHTTP:      api.LContextHTTP,
+		crd.ContextKindRclone:    api.LContextRclone,
 	}
 	l, ok = contextLabels[bj.Spec.Context.Kind]
 	if ok {

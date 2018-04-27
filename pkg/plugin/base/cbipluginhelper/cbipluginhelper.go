@@ -102,6 +102,8 @@ func (ci *ContextInjector) Inject(bjContext crd.Context) (string, error) {
 		return ci.injectGit(bjContext.Git)
 	case crd.ContextKindHTTP:
 		return ci.injectHTTP(bjContext.HTTP)
+	case crd.ContextKindRclone:
+		return ci.injectRclone(bjContext.Rclone)
 	default:
 		return "", fmt.Errorf("unsupported Spec.Context: %v", k)
 	}
@@ -279,8 +281,89 @@ func (ci *ContextInjector) injectHTTP(spec crd.HTTP) (string, error) {
 	return contextPath, nil
 }
 
+// injectRclone injects rclone to podSpec and returns the context path
+func (ci *ContextInjector) injectRclone(spec crd.Rclone) (string, error) {
+	const (
+		// vol is an emptyDir volume
+		volName           = "cbi-rclonecontext"
+		volMountPath      = "/cbi-rclonecontext"
+		volContextSubpath = "context"
+		secretVolName     = "cbi-rclonesecret"
+		initContainerName = "cbi-rclonecontext-init"
+	)
+	idx := ci.TargetContainerIdx
+
+	secretVolMountPath, err := securejoin.SecureJoin(ci.Helper.HomeDir, ".config/rclone")
+	if err != nil {
+		return "", err
+	}
+	secretVolDefaultMode := int32(0400)
+
+	ci.TargetPodSpec.Volumes = append(ci.TargetPodSpec.Volumes, corev1.Volume{
+		Name: volName,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	}, corev1.Volume{
+		Name: secretVolName,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName:  spec.SecretRef.Name,
+				DefaultMode: &secretVolDefaultMode,
+			},
+		},
+	})
+	ci.TargetPodSpec.Containers[idx].VolumeMounts = append(ci.TargetPodSpec.Containers[idx].VolumeMounts,
+		corev1.VolumeMount{
+			Name:      volName,
+			MountPath: volMountPath,
+		},
+	)
+
+	contextPath, _ := securejoin.SecureJoin(volMountPath, volContextSubpath)
+	initContainer := corev1.Container{
+		Name:    initContainerName,
+		Image:   ci.Helper.Image,
+		Command: []string{"/rclone", "sync", spec.Remote + ":" + spec.Path, contextPath},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      volName,
+				MountPath: volMountPath,
+			},
+			{
+				Name:      secretVolName,
+				MountPath: secretVolMountPath,
+			},
+		},
+	}
+	if sshSecretName := spec.SSHSecretRef.Name; sshSecretName != "" {
+		const sshVolName = "cbi-rclonesshsecret"
+		sshVolMountPath, err := securejoin.SecureJoin(ci.Helper.HomeDir, ".ssh")
+		if err != nil {
+			return "", err
+		}
+		sshVol := corev1.Volume{
+			Name: sshVolName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName:  sshSecretName,
+					DefaultMode: &secretVolDefaultMode,
+				},
+			},
+		}
+		ci.TargetPodSpec.Volumes = append(ci.TargetPodSpec.Volumes, sshVol)
+		initContainer.VolumeMounts = append(initContainer.VolumeMounts, corev1.VolumeMount{
+			Name:      sshVolName,
+			MountPath: sshVolMountPath,
+		})
+	}
+	ci.TargetPodSpec.InitContainers = append(ci.TargetPodSpec.InitContainers, initContainer)
+	return contextPath, nil
+}
+
 var Labels = map[string]string{
 	pluginapi.LContextConfigMap: "",
 	pluginapi.LContextGit:       "",
 	pluginapi.LContextHTTP:      "",
+	pluginapi.LContextRclone:    "",
 }
