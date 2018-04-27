@@ -93,6 +93,7 @@ type Context struct {
 	Git          Git                         `json:"git"`
 	ConfigMapRef corev1.LocalObjectReference `json:"configMapRef"`
 	HTTP         HTTP                        `json:"http"`
+	Rclone       Rclone                      `json:"rclone"`
 }
 
 const (
@@ -110,6 +111,11 @@ const (
 	// When BuildJob.Context.Kind is set to ContextKindHTTP, the controller
 	// MUST add "context.http" to its default plugin selector logic.
 	ContextKindHTTP = "HTTP"
+
+	// ContextKindRclone stands for Rclone context.
+	// When BuildJob.Context.Kind is set to ContextKindHTTP, the controller
+	// MUST add "context.rclone" to its default plugin selector logic.
+	ContextKindRclone = "Rclone"
 )
 
 // Git
@@ -145,6 +151,18 @@ type HTTP struct {
 	// SubPath within the archive.
 	// +optinal
 	SubPath string `json:"subPath"`
+}
+
+// Rclone
+type Rclone struct {
+	Remote string
+	Path   string
+	// SecretRef contains the contents of ~/.config/rclone.
+	SecretRef corev1.LocalObjectReference `json:"secretRef"`
+	// SSHSecretRef contains the contents of ~/.ssh.OLD.
+	// Only required for SFTP remote.
+	// +optional
+	SSHSecretRef corev1.LocalObjectReference `json:"sshSecretRef"`
 }
 
 // BuildJobStatus is the status for a BuildJob resource

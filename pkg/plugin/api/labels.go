@@ -50,4 +50,10 @@ const (
 	//
 	// Value SHOULD be empty.
 	LContextHTTP = "context.http"
+
+	// LContextRclone SHOULD be present if the plugin accepts a BuildJob
+	// with Context.Kind = ContextKindRclone
+	//
+	// Value SHOULD be empty.
+	LContextRclone = "context.rclone"
 )
