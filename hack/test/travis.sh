@@ -13,13 +13,6 @@ export PATH=~/.kubeadm-dind-cluster:$PATH
 
 echo travis_fold:start:dind-up
 
-# workaround on travis: kubernetes/kubernetes-anywhere#88
-sudo mkdir /vlkp
-sudo chmod 777 /vlkp
-sudo mount -o bind /vlkp /vlkp
-sudo mount --make-rshared /vlkp
-export DIND_VARLIBKUBELETPODS_BASE=/vlkp
-
 ./hack/dind/up.sh
 echo travis_fold:end:dind-up
 

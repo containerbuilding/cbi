@@ -12,12 +12,13 @@ source ./hack/dind/config
 
 # Download Mirantis/kubeadm-dind-cluster 
 if [ ! -x ${DIND_CLUSTER_SH} ]; then
-    wget -O ${DIND_CLUSTER_SH} ${DIND_CLUSTER_SH_URL}
+    wget -O /tmp/fixme ${DIND_CLUSTER_SH_URL}
+    sed "s@#%CONFIG%@EMBEDDED_CONFIG=y;DIND_IMAGE=$(echo ${DIND_IMAGE} | sed -e s/@/\\\\@/)@" /tmp/fixme > ${DIND_CLUSTER_SH}
     chmod +x ${DIND_CLUSTER_SH}
 fi
 
 # Start kube
-DIND_INSECURE_REGISTRIES="[\"${CBI_REGISTRY}:5000\"]" DIND_DAEMON_JSON_FILE=/dev/null ${DIND_CLUSTER_SH} up
+DIND_INSECURE_REGISTRIES="[\"${CBI_REGISTRY}:5000\"]" DIND_DAEMON_JSON_FILE=/dev/null LOCAL_KUBECTL_VERSION=${LOCAL_KUBECTL_VERSION} ${DIND_CLUSTER_SH} up
 
 # Add registry to the network
 docker run -d --network ${DIND_NET} --name ${CBI_REGISTRY} ${CBI_REGISTRY_IMAGE}
