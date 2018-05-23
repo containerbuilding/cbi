@@ -1,7 +1,9 @@
 # CBI: Container Builder Interface for Kubernetes
 
 CBI provides a vendor-neutral interface for building (and pushing) container images on top of a Kubernetes cluster,
-with support for several backends such as [Docker](https://www.docker.com), [img](https://github.com/genuinetools/img), [BuildKit](https://github.com/moby/buildkit), and [Buildah](https://github.com/projectatomic/buildah).
+with support for several backends such as [Docker](https://www.docker.com), [BuildKit](https://github.com/moby/buildkit), [Buildah](https://github.com/projectatomic/buildah), [kaniko](https://github.com/GoogleCloudPlatform/kaniko), [img](https://github.com/genuinetools/img), [Google Cloud Container Builder](https://cloud.google.com/container-builder/), and [OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image).
+
+![cbi.png](./docs/cbi.png)
 
 <!-- TOC generator: https://github.com/stakiran/intoc -->
 
@@ -20,7 +22,7 @@ with support for several backends such as [Docker](https://www.docker.com), [img
      - [Rclone context (S3, Dropbox, SFTP, and many)](#rclone-context-s3-dropbox-sftp-and-many)
    - [Plugin](#plugin)
      - [Specify the plugin explicitly](#specify-the-plugin-explicitly)
-     - [Google Container Builder plugin](#google-container-builder-plugin)
+     - [Google Cloud Container Builder plugin](#google-cloud-container-builder-plugin)
      - [Openshift Source-to-Image plugin](#openshift-source-to-image-plugin)
  - [Design (subject to change)](#design-subject-to-change)
    - [Components](#components)
@@ -45,7 +47,7 @@ with support for several backends such as [Docker](https://www.docker.com), [img
 
 * CBI controller daemon (`cbid`): pre-alpha, see [`cmd/cbid`](cmd/cbid).
 
-* Plugins (all of them are pre-alpha or even hasn't been started to work on):
+* Plugins (all of them are pre-alpha):
 
 Plugin    |Backend                                                                        |Dockerfile|`cloudbuild.yaml`|OpenShift S2I|BuildKit LLB
 ----------|-------------------------------------------------------------------------------|----------|-----------------|-------------|------------
@@ -57,7 +59,7 @@ Plugin    |Backend                                                              
 `gcb`     |[Google Cloud Container Builder](https://cloud.google.com/container-builder/)  |Yes ✅    |Planned          |             |
 `s2i`     |[OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image)|          |                 |Yes ✅       |
 
-* Planned: [ACR Build](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-build-overview), [Bazel](https://github.com/bazelbuild/rules_docker), [Singularity](http://singularity.lbl.gov), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
+* Planned plugins (subject to change): [ACR Build](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-build-overview), [Bazel](https://github.com/bazelbuild/rules_docker), [Singularity](http://singularity.lbl.gov), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
 
 
 * Context providers (available for all plugins)
@@ -170,7 +172,7 @@ spec:
       url: ssh://me@git.example.com/foo/bar.git
 ```
 
-Note: for Google Container Builder plugin, please refer to the [Google Container Builder plugin](#google-container-builder-plugin) section.
+Note: for Google Cloud Container Builder plugin, please refer to the [Google Cloud Container Builder plugin](#google-cloud-container-builder-plugin) section.
 
 ### Build contexts
 
@@ -330,7 +332,7 @@ spec:
   ...
 ```
 
-#### Google Container Builder plugin
+#### Google Cloud Container Builder plugin
 
 You need to create a Google Cloud service account JSON with "Project Editor" role ([?](https://cloudplatform.googleblog.com/2018/03/automatic-serverless-deployments-with-Cloud-Source-Repositories-and-Container-Builder.html)) in https://console.cloud.google.com/iam-admin/serviceaccounts , and create a Kubernetes secret as follows:
 
@@ -366,8 +368,8 @@ spec:
 
 Note:
 
-* `metadata/annotations["cbi-gcb/secret"]` needs to be the name of the secret
-* `metadata/annotations["cbi-gcb/project"]` needs to be the name of the Google Cloud project
+* `metadata.annotations["cbi-gcb/secret"]` needs to be set to the name of the secret
+* `metadata.annotations["cbi-gcb/project"]` needs to be set to the name of the Google Cloud project
 * `spec.registry.target` needs to be in the `gcr.io/*` or `*.gcr.io/*` namespace.
 * `spec.registry.push` needs to be `true`
 * `spec.registry.secretRef` must not be set
@@ -376,7 +378,7 @@ Note:
 
 `s2i` plugin supports building images from S2I source but it does not support Dockerfile.
 
-See `examples/ex-s2i-nopush.yaml`(examples/ex-s2i-nopush.yaml).
+See [`examples/ex-s2i-nopush.yaml`](examples/ex-s2i-nopush.yaml).
 
 ## Design (subject to change)
 
@@ -397,8 +399,6 @@ Implementations:
 * CBI session manager (`cbism`): pods that speak [BuildKit session gRPC](https://github.com/moby/buildkit/blob/9f6d9a9e78f18b2ffc6bc4f211092722685cc853/session/filesync/filesync.proto) (or other similar protocols) for supporting large build context and diffcopy.
 
 The concept of CBI session manager (`cbism`) is decoupled from `cbid`, so as to make `cbid` free from I/O overhead.
-
-![cbi.png](./docs/cbi.png)
 
 ### Build context
 
