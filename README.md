@@ -132,7 +132,7 @@ spec:
   language:
     kind: Dockerfile
   context:
-    kind: git
+    kind: Git
     git:
       url: ssh://me@git.example.com/foo/bar.git
 ```
@@ -199,7 +199,7 @@ spec:
   language:
     kind: Dockerfile
   context:
-    kind: git
+    kind: Git
     git:
 # only url is mandatory. See git(1) for url spec.
       url: ssh://me@git.example.com/foo/bar.git
@@ -325,7 +325,7 @@ spec:
   language:
     kind: Dockerfile
   context:
-    kind: git
+    kind: Git
     git:
       url: https://git.example.com/foo/bar.git
   pluginSelector: plugin.name=gcb
