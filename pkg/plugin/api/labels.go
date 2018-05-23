@@ -30,6 +30,7 @@ const (
 	// Value SHOULD be empty.
 	LLanguageDockerfile = "language.dockerfile"
 	// TODO: add LLanguageDockerfileMultistage = "language.dockerfile.multistage"...
+	LLanguageS2I = "language.s2i"
 )
 
 const (

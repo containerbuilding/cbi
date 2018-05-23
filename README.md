@@ -16,18 +16,17 @@ with support for several backends such as [Docker](https://www.docker.com), [img
 
 * Plugins (all of them are pre-alpha or even hasn't been started to work on):
 
-Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
---- | --- | --- | ---
-[Docker](https://www.docker.com) | Yes ✅| |
-[BuildKit](https://github.com/moby/buildkit) | Yes ✅| | Planned
-[Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | |
-[kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Yes ✅ | |
-[img](https://github.com/genuinetools/img) | Yes ✅ | |
-[Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Yes ✅ | Planned |
+Plugin    |Backend                                                                        |Dockerfile|`cloudbuild.yaml`|OpenShift S2I|BuildKit LLB
+----------|-------------------------------------------------------------------------------|----------|-----------------|-------------|------------
+`docker`  |[Docker](https://www.docker.com)                                               |Yes ✅    |                 |             |
+`buildkit`|[BuildKit](https://github.com/moby/buildkit)                                   |Yes ✅    |                 |             |Planned
+`buildah` |[Buildah](https://github.com/projectatomic/buildah)                            |Yes ✅    |                 |             |
+`kaniko`  |[kaniko](https://github.com/GoogleCloudPlatform/kaniko)                        |Yes ✅    |                 |             |
+`img`     |[img](https://github.com/genuinetools/img)                                     |Yes ✅    |                 |             |
+`gcb`     |[Google Cloud Container Builder](https://cloud.google.com/container-builder/)  |Yes ✅    |Planned          |             |
+`s2i`     |[OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image)|          |                 |Yes ✅       |
 
-* Planned: [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
-
-<!-- TODO: figure out possibility for supporting Bazel, OpenShift S2I, Singularity... -->
+* Planned: [ACR Build](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-build-overview), [Bazel](https://github.com/bazelbuild/rules_docker), [Singularity](http://singularity.lbl.gov), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
 
 
 * Context providers (available for all plugins)
@@ -52,14 +51,17 @@ $ kubectl apply -f https://raw.githubusercontent.com/containerbuilding/cbi/maste
 
 The CBI controller daemon and the following plugins will be installed:
 
-Plugin   | Requirements
----      | ---
-Docker (highest priority)   | Docker needs to be installed on the hosts
-Buildah  | Privileged containers needs to be enabled
-BuildKit | Privileged containers needs to be enabled
-kaniko   | None (Google Cloud is not needed)
-img      | Privileged containers needs to be enabled (See [`kubernetes/community#1934`](https://github.com/kubernetes/community/pull/1934) and [Jess's blog](https://blog.jessfraz.com/post/building-container-images-securely-on-kubernetes/) for the ongoing work to remove this requirement)
-Google Container Builder | Requires Google Cloud service account (GKE/GCR/GCE is not needed)
+Plugin    | Requirements
+--------- | ------------------------------
+`docker`  | Docker needs to be installed on the hosts
+`buildah` | Privileged containers needs to be enabled
+`buildKit`| Privileged containers needs to be enabled
+`kaniko`  | None (Google Cloud is not needed)
+`img`     | Privileged containers needs to be enabled (See [`kubernetes/community#1934`](https://github.com/kubernetes/community/pull/1934) and [Jess's blog](https://blog.jessfraz.com/post/building-container-images-securely-on-kubernetes/) for the ongoing work to remove this requirement)
+`gcb`     | Requires Google Cloud service account (GKE/GCR/GCE is not needed)
+`s2i`     | Docker needs to be installed on the hosts (OpenShift is not needed)
+
+The default plugin is `docker`.
 
 You may edit the YAML file to remove unneeded plugins or change the priorities.
 
@@ -339,6 +341,11 @@ Note:
 * `spec.registry.push` needs to be `true`
 * `spec.registry.secretRef` must not be set
 
+#### Openshift Source-to-Image plugin
+
+`s2i` plugin supports building images from S2I source but it does not support Dockerfile.
+
+See `examples/ex-s2i-nopush.yaml`(examples/ex-s2i-nopush.yaml).
 
 ## Design (subject to change)
 

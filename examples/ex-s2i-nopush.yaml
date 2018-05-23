@@ -1,0 +1,16 @@
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex-s2i-nopush
+spec:
+  registry:
+    target: example.com/foo/ex-s2i-nopush
+    push: false
+  language:
+    kind: S2I
+    s2i:
+      baseImage: centos/python-35-centos7
+  context:
+    kind: Git
+    git:
+      url: https://github.com/openshift/django-ex

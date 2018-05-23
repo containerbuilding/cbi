@@ -46,7 +46,7 @@ var generateManifests = &cli.Command{
 		&cli.StringSliceFlag{
 			Name:  "plugin",
 			Usage: "Plugin names (first=highest priority, last=lowest priority)",
-			Value: cli.NewStringSlice("docker", "buildkit", "buildah", "kaniko", "img", "gcb"),
+			Value: cli.NewStringSlice("docker", "buildkit", "buildah", "kaniko", "img", "gcb", "s2i"),
 		},
 	},
 	Action: generateManifestsAction,
@@ -137,6 +137,10 @@ func generateManifestsAction(clicontext *cli.Context) error {
 		case "gcb":
 			args = func() []string {
 				return []string{"-gcloud-image=google/cloud-sdk:alpine"}
+			}
+		case "s2i":
+			args = func() []string {
+				return []string{fmt.Sprintf("-s2i-image=%s/s2i:%s", registry, tag)}
 			}
 		default:
 			return fmt.Errorf("unknown plugin: %s", p)

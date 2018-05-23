@@ -74,4 +74,6 @@ for f in docker buildkit buildah img; do
     kubectl delete configmap ex-configmap-nopush-configmap
 done
 
+e2e ex-s2i-nopush s2i
+
 # TODO: add tests for pushing
