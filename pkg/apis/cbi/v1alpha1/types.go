@@ -77,7 +77,9 @@ type Registry struct {
 
 // Language specifies the language.
 type Language struct {
-	Kind string `json:"kind"`
+	Kind       string     `json:"kind"`
+	Dockerfile Dockerfile `json:"dockerfile"`
+	S2I        S2I        `json:"s2i"`
 }
 
 const (
@@ -85,7 +87,19 @@ const (
 	// When BuildJob.Language.Kind is set to LanguageKindDockerfile, the controller
 	// MUST add "language.dockerfile" to its default plugin selector logic.
 	LanguageKindDockerfile = "Dockerfile"
+	// LanguageKindS2I stands for OpenShift Source-to-Image.
+	LanguageKindS2I = "S2I"
 )
+
+// Dockerfile-specific fields
+type Dockerfile struct {
+}
+
+// S2I-specific fields
+type S2I struct {
+	// S2I-specific base image. e,g, centos/ruby-22-centos7
+	BaseImage string `json:"baseImage"`
+}
 
 // Context specifies the context.
 type Context struct {

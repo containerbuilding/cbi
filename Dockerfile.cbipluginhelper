@@ -15,5 +15,6 @@ RUN apk add --no-cache \
   rm -rf rclone-v1.40-linux-amd64
 # For docker-like builders
 ADD hack/dockerfiles/docker-build-push.sh /
+ADD hack/dockerfiles/s2i-build-push.sh /
 COPY --from=compile /cbipluginhelper /cbipluginhelper
 ENTRYPOINT ["/cbipluginhelper", "--debug"]

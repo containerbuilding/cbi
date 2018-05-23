@@ -32,6 +32,7 @@ func defaultRequirements(bj crd.BuildJob) ([]labels.Requirement, error) {
 	var requirements []labels.Requirement
 	languageLabels := map[string]string{
 		strings.ToLower(crd.LanguageKindDockerfile): api.LLanguageDockerfile,
+		strings.ToLower(crd.LanguageKindS2I):        api.LLanguageS2I,
 	}
 	l, ok := languageLabels[strings.ToLower(bj.Spec.Language.Kind)]
 	if ok {
