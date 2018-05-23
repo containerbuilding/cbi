@@ -67,7 +67,23 @@ func TestSelectPlugin(t *testing.T) {
 						Kind: crd.LanguageKindDockerfile,
 					},
 					Context: crd.Context{
-						Kind: crd.ContextKindGit,
+						Kind: crd.ContextKindGit, // "Git"
+					},
+				},
+			},
+			expected: 1,
+		},
+		{
+			bj: crd.BuildJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "dummy0",
+				},
+				Spec: crd.BuildJobSpec{
+					Language: crd.Language{
+						Kind: crd.LanguageKindDockerfile,
+					},
+					Context: crd.Context{
+						Kind: "git", // non-canonical form (lower case) is allowed
 					},
 				},
 			},

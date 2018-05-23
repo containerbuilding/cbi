@@ -66,6 +66,7 @@ function e2e(){
 }
 
 # NOTE: no test for kaniko, because it always requires pushing at the moment.
+# NOTE: no test for gcb, because it requires Google Cloud account.
 for f in docker buildkit buildah img; do
     e2e ex-git-nopush $f
     e2e ex-http-nopush $f
