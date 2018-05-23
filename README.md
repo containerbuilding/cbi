@@ -19,12 +19,13 @@ with support for several backends such as [Docker](https://www.docker.com), [img
 Plugin | Support Dockerfile | Support `cloudbuild.yaml` | Support LLB
 --- | --- | --- | ---
 [Docker](https://www.docker.com) | Yes ✅| |
-[BuildKit](https://github.com/moby/buildkit) | Yes ✅| Planned? (TBD) | Planned
+[BuildKit](https://github.com/moby/buildkit) | Yes ✅| | Planned
 [Buildah](https://github.com/projectatomic/buildah) | Yes ✅ | |
 [kaniko](https://github.com/GoogleCloudPlatform/kaniko) | Yes ✅ | |
 [img](https://github.com/genuinetools/img) | Yes ✅ | |
+[Google Cloud Container Builder](https://cloud.google.com/container-builder/) | Yes ✅ | Planned |
 
-* Planned: [Google Cloud Container Builder](https://cloud.google.com/container-builder/), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
+* Planned: [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
 
 <!-- TODO: figure out possibility for supporting Bazel, OpenShift S2I, Singularity... -->
 
@@ -51,13 +52,14 @@ $ kubectl apply -f https://raw.githubusercontent.com/containerbuilding/cbi/maste
 
 The CBI controller daemon and the following plugins will be installed:
 
-Plugin   | Note
+Plugin   | Requirements
 ---      | ---
 Docker (highest priority)   | Docker needs to be installed on the hosts
 Buildah  | Privileged containers needs to be enabled
 BuildKit | Privileged containers needs to be enabled
-kaniko   | N/A
+kaniko   | None (Google Cloud is not needed)
 img      | Privileged containers needs to be enabled (See [`kubernetes/community#1934`](https://github.com/kubernetes/community/pull/1934) and [Jess's blog](https://blog.jessfraz.com/post/building-container-images-securely-on-kubernetes/) for the ongoing work to remove this requirement)
+Google Container Builder | Requires Google Cloud service account (GKE/GCR/GCE is not needed)
 
 You may edit the YAML file to remove unneeded plugins or change the priorities.
 
@@ -134,6 +136,8 @@ spec:
     git:
       url: ssh://me@git.example.com/foo/bar.git
 ```
+
+Note: for Google Container Builder plugin, please refer to the [Google Container Builder plugin](#google-container-builder-plugin) section.
 
 ### Build contexts
 
@@ -272,9 +276,9 @@ spec:
 
 To use SFTP remote, you might need to specify `spec.context.rclone.sshSecretRef` as in Git context.
 
-#### Plugin
+### Plugin
 
-### Specify the plugin explicitly
+#### Specify the plugin explicitly
 
 Usually. the plugin is automatically selected by the CBI controller daemon.
 
@@ -292,6 +296,48 @@ spec:
   pluginSelector: plugin.name=buildah
   ...
 ```
+
+#### Google Container Builder plugin
+
+You need to create a Google Cloud service account JSON with "Project Editor" role ([?](https://cloudplatform.googleblog.com/2018/03/automatic-serverless-deployments-with-Cloud-Source-Repositories-and-Container-Builder.html)) in https://console.cloud.google.com/iam-admin/serviceaccounts , and create a Kubernetes secret as follows:
+
+<!-- TODO: find narrower Google Cloud role? -->
+
+```console
+$ kubectl create secret generic my-gcb --from-file=json=my-gcb-service-account.json
+```
+You don't need to use GKE (of course you can use though).
+
+Example manifest:
+
+```yaml
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex-git-push
+  annotations:
+    cbi-gcb/secret: my-gcb
+    cbi-gcb/project: my-gcp-project
+spec:
+  registry:
+    target: gcr.io/example/foo
+    push: true
+  language:
+    kind: Dockerfile
+  context:
+    kind: git
+    git:
+      url: https://git.example.com/foo/bar.git
+  pluginSelector: plugin.name=gcb
+```
+
+Note:
+
+* `metadata/annotations["cbi-gcb/secret"]` needs to be the name of the secret
+* `metadata/annotations["cbi-gcb/project"]` needs to be the name of the Google Cloud project
+* `spec.registry.target` needs to be in the `gcr.io/*` or `*.gcr.io/*` namespace.
+* `spec.registry.push` needs to be `true`
+* `spec.registry.secretRef` must not be set
 
 
 ## Design (subject to change)
