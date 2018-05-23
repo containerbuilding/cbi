@@ -3,6 +3,37 @@
 CBI provides a vendor-neutral interface for building (and pushing) container images on top of a Kubernetes cluster,
 with support for several backends such as [Docker](https://www.docker.com), [img](https://github.com/genuinetools/img), [BuildKit](https://github.com/moby/buildkit), and [Buildah](https://github.com/projectatomic/buildah).
 
+<!-- TOC generator: https://github.com/stakiran/intoc -->
+
+ - [Current status](#current-status)
+   - [Specification](#specification)
+   - [Implementation](#implementation)
+ - [Quick start](#quick-start)
+   - [Installation](#installation)
+   - [Run your first `buildjob`](#run-your-first-buildjob)
+ - [Advanced usage](#advanced-usage)
+   - [Push to a registry](#push-to-a-registry)
+   - [Build contexts](#build-contexts)
+     - [ConfigMap context](#configmap-context)
+     - [Git context](#git-context)
+     - [HTTP(S) context](#https-context)
+     - [Rclone context (S3, Dropbox, SFTP, and many)](#rclone-context-s3-dropbox-sftp-and-many)
+   - [Plugin](#plugin)
+     - [Specify the plugin explicitly](#specify-the-plugin-explicitly)
+     - [Google Container Builder plugin](#google-container-builder-plugin)
+     - [Openshift Source-to-Image plugin](#openshift-source-to-image-plugin)
+ - [Design (subject to change)](#design-subject-to-change)
+   - [Components](#components)
+   - [Build context](#build-context)
+     - [BuildkitSession (Planned)](#buildkitsession-planned)
+ - [Contribute to CBI](#contribute-to-cbi)
+   - [Testing](#testing)
+   - [Local testing with DinD](#local-testing-with-dind)
+ - [FAQs](#faqs)
+   - [Q: Does CBI standardize the Dockerfile specification?](#q-does-cbi-standardize-the-dockerfile-specification)
+   - [Q: Does CBI replace BuildKit?](#q-does-cbi-replace-buildkit)
+   - [Q: Is CBI a part of Kubernetes, a Kubernetes incubator, or a CNCF project?](#q-is-cbi-a-part-of-kubernetes-a-kubernetes-incubator-or-a-cncf-project)
+
 ## Current status
 
 ### Specification
