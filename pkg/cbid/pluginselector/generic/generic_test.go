@@ -30,24 +30,24 @@ func TestSelectPlugin(t *testing.T) {
 		{
 			// 0
 			Labels: map[string]string{
-				api.LPluginName:         "foo",
-				api.LLanguageDockerfile: "",
+				api.LPluginName:                           "foo",
+				api.LLanguage(crd.LanguageKindDockerfile): "",
 			},
 		},
 		{
 			// 1
 			Labels: map[string]string{
-				api.LPluginName:         "foo",
-				api.LLanguageDockerfile: "",
-				api.LContextGit:         "",
+				api.LPluginName:                           "foo",
+				api.LLanguage(crd.LanguageKindDockerfile): "",
+				api.LContext(crd.ContextKindGit):          "",
 			},
 		},
 		{
 			// 2
 			Labels: map[string]string{
-				api.LPluginName:         "bar",
-				api.LLanguageDockerfile: "",
-				api.LContextGit:         "",
+				api.LPluginName:                           "bar",
+				api.LLanguage(crd.LanguageKindDockerfile): "",
+				api.LContext(crd.ContextKindGit):          "",
 			},
 		},
 	}

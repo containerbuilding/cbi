@@ -19,6 +19,7 @@ package s2i
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -39,8 +40,8 @@ var _ base.Backend = &S2I{}
 func (b *S2I) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
 	res := &pluginapi.InfoResponse{
 		Labels: map[string]string{
-			pluginapi.LPluginName:  "s2i",
-			pluginapi.LLanguageS2I: "",
+			pluginapi.LPluginName:                    "s2i",
+			pluginapi.LLanguage(crd.LanguageKindS2I): "",
 		},
 	}
 	for k, v := range cbipluginhelper.Labels {
@@ -100,7 +101,10 @@ func (b *S2I) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 }
 
 func (b *S2I) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Language.Kind != crd.LanguageKindS2I {
+	switch k := strings.ToLower(string(buildJob.Spec.Language.Kind)); k {
+	case strings.ToLower(string(crd.LanguageKindS2I)):
+		// NOP
+	default:
 		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
 	}
 	if buildJob.Spec.Language.S2I.BaseImage == "" {

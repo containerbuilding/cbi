@@ -18,9 +18,7 @@ package generic
 
 import (
 	"fmt"
-	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -30,40 +28,16 @@ import (
 
 func defaultRequirements(bj crd.BuildJob) ([]labels.Requirement, error) {
 	var requirements []labels.Requirement
-	languageLabels := map[string]string{
-		strings.ToLower(crd.LanguageKindDockerfile): api.LLanguageDockerfile,
-		strings.ToLower(crd.LanguageKindS2I):        api.LLanguageS2I,
+	r, err := labels.NewRequirement(api.LLanguage(bj.Spec.Language.Kind), selection.Exists, nil)
+	if err != nil {
+		return nil, err
 	}
-	l, ok := languageLabels[strings.ToLower(bj.Spec.Language.Kind)]
-	if ok {
-		r, err := labels.NewRequirement(l, selection.Exists, nil)
-		if err != nil {
-			return nil, err
-		}
-		requirements = append(requirements, *r)
-	} else {
-		return nil, &errors.UnexpectedObjectError{
-			Object: &bj,
-		}
+	requirements = append(requirements, *r)
+	r, err = labels.NewRequirement(api.LContext(bj.Spec.Context.Kind), selection.Exists, nil)
+	if err != nil {
+		return nil, err
 	}
-	contextLabels := map[string]string{
-		strings.ToLower(crd.ContextKindGit):       api.LContextGit,
-		strings.ToLower(crd.ContextKindConfigMap): api.LContextConfigMap,
-		strings.ToLower(crd.ContextKindHTTP):      api.LContextHTTP,
-		strings.ToLower(crd.ContextKindRclone):    api.LContextRclone,
-	}
-	l, ok = contextLabels[strings.ToLower(bj.Spec.Context.Kind)]
-	if ok {
-		r, err := labels.NewRequirement(l, selection.Exists, nil)
-		if err != nil {
-			return nil, err
-		}
-		requirements = append(requirements, *r)
-	} else {
-		return nil, &errors.UnexpectedObjectError{
-			Object: &bj,
-		}
-	}
+	requirements = append(requirements, *r)
 	return requirements, nil
 }
 

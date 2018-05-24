@@ -63,6 +63,8 @@ type Registry struct {
 	// Target is used for pushing the artifact to the registry.
 	// Most plugin implementations would require non-empty Target string,
 	// even when Push is set to false.
+	//
+	// Cloudbuild requires this filed not to be set.
 	// +optional
 	// e.g. `example.com:foo/bar:latest`
 	Target string `json:"target"`
@@ -75,20 +77,25 @@ type Registry struct {
 	SecretRef corev1.LocalObjectReference `json:"secretRef"`
 }
 
+type LanguageKind string
+
 // Language specifies the language.
 type Language struct {
-	Kind       string     `json:"kind"`
-	Dockerfile Dockerfile `json:"dockerfile"`
-	S2I        S2I        `json:"s2i"`
+	Kind       LanguageKind `json:"kind"`
+	Dockerfile Dockerfile   `json:"dockerfile"`
+	S2I        S2I          `json:"s2i"`
+	Cloudbuild Cloudbuild   `json:"cloudbuild"`
 }
 
 const (
 	// LanguageKindDockerfile stands for Dockerfile.
 	// When BuildJob.Language.Kind is set to LanguageKindDockerfile, the controller
 	// MUST add "language.dockerfile" to its default plugin selector logic.
-	LanguageKindDockerfile = "Dockerfile"
+	LanguageKindDockerfile LanguageKind = "Dockerfile"
 	// LanguageKindS2I stands for OpenShift Source-to-Image.
-	LanguageKindS2I = "S2I"
+	LanguageKindS2I LanguageKind = "S2I"
+	// LanguageKindCloudbuild stands for Google cloudbuild.yaml
+	LanguageKindCloudbuild LanguageKind = "Cloudbuild"
 )
 
 // Dockerfile-specific fields
@@ -101,9 +108,15 @@ type S2I struct {
 	BaseImage string `json:"baseImage"`
 }
 
+// Cloudbuild-specific fields
+type Cloudbuild struct {
+}
+
+type ContextKind string
+
 // Context specifies the context.
 type Context struct {
-	Kind         string                      `json:"kind"`
+	Kind         ContextKind                 `json:"kind"`
 	Git          Git                         `json:"git"`
 	ConfigMapRef corev1.LocalObjectReference `json:"configMapRef"`
 	HTTP         HTTP                        `json:"http"`
@@ -114,22 +127,22 @@ const (
 	// ContextKindGit stands for Git context.
 	// When BuildJob.Context.Kind is set to ContextKindGit, the controller
 	// MUST add "context.git" to its default plugin selector logic.
-	ContextKindGit = "Git"
+	ContextKindGit ContextKind = "Git"
 
 	// ContextKindConfigMap stands for ConfigMap context.
 	// When BuildJob.Context.Kind is set to ContextKindConfigMap, the controller
 	// MUST add "context.configmap" to its default plugin selector logic.
-	ContextKindConfigMap = "ConfigMap"
+	ContextKindConfigMap ContextKind = "ConfigMap"
 
 	// ContextKindHTTP stands for HTTP(S) context.
 	// When BuildJob.Context.Kind is set to ContextKindHTTP, the controller
 	// MUST add "context.http" to its default plugin selector logic.
-	ContextKindHTTP = "HTTP"
+	ContextKindHTTP ContextKind = "HTTP"
 
 	// ContextKindRclone stands for Rclone context.
 	// When BuildJob.Context.Kind is set to ContextKindHTTP, the controller
 	// MUST add "context.rclone" to its default plugin selector logic.
-	ContextKindRclone = "Rclone"
+	ContextKindRclone ContextKind = "Rclone"
 )
 
 // Git
