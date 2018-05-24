@@ -82,6 +82,27 @@ Requires Kubernetes 1.9 or later.
 $ kubectl apply -f https://raw.githubusercontent.com/containerbuilding/cbi/master/cbi-latest.yaml
 ```
 
+<details>
+<summary>Hint for Google Kubernetes Engine (GKE) users</summary>
+<p>
+ If you hit <a href="https://stackoverflow.com/questions/46307325/gke-clusterrolebinding-for-cluster-admin-fails-with-permission-error">an error while creating <code>clusterrolebindings</code></a>, you need to execute <code>kubectl</code> command as follows:
+
+ <pre>
+$ pw=$(gcloud --format json container clusters describe ${YOUR_GKE_CLUSTER_NAME} | jq -r .masterAuth.password)
+$ kubectl --username=admin --password=${pw} ...
+ </pre>
+ </p>
+</details>
+
+<details>
+<summary>Hint for OpenShift users</summary>
+<p>
+<code>oc login -u system:admin -n default</code> might be needed before running <code>kubectl</code>.
+
+You would also need to enable privileged containers for most plugins. (how?)
+</p>
+</details>
+
 The CBI controller daemon and the following plugins will be installed:
 
 Plugin    | Requirements
@@ -91,7 +112,7 @@ Plugin    | Requirements
 `buildKit`| Privileged containers needs to be enabled
 `kaniko`  | None (Google Cloud is not needed)
 `img`     | Privileged containers needs to be enabled (See [`kubernetes/community#1934`](https://github.com/kubernetes/community/pull/1934) and [Jess's blog](https://blog.jessfraz.com/post/building-container-images-securely-on-kubernetes/) for the ongoing work to remove this requirement)
-`gcb`     | Requires Google Cloud service account (GKE/GCR/GCE is not needed)
+`gcb`     | Requires Google Cloud service account with IAM roles, see [this section](#google-cloud-container-builder-plugin) (Your cluster does not need to be GKE or on GCE)
 `s2i`     | Docker needs to be installed on the hosts (OpenShift is not needed)
 
 The default plugin is `docker`.
@@ -102,7 +123,7 @@ You may edit the YAML file to remove unneeded plugins or change the priorities.
 
 Create a buildjob `ex-git-nopush` from [`examples/ex-git-nopush.yaml`](examples/ex-git-nopush.yaml):
 ```console
-$ kubectl create -f examples/ex-git-nopush.yaml
+$ kubectl create -f https://raw.githubusercontent.com/containerbuilding/cbi/master/examples/ex-git-nopush.yaml
 buildjob "ex-git-nopush" created
 ```
 
@@ -138,16 +159,28 @@ buildjob "ex-git-nopush" deleted
 First you need to create a credential using `kubectl create secret docker-registry ...`.
 See [Kubernetes's manual](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
 
-If you are using Amazon ECR, you may create the credential as follows (expires per 12 hours):
+<details>
+<summary>Hint for Amazon Elastic Container Registry (ECR) users</summary>
+<p>
+You can create the credential as follows (expires per 12 hours):
 
-```console
+<pre>
 $ TOKEN=`aws ecr get-authorization-token --output text --query authorizationData[].authorizationToken | base64 -d | cut -d: -f2`
 $ kubectl create secret docker-registry my-registry-secret \
  --docker-server=https://12345678.dkr.ecr.ap-northeast-1.amazonaws.com \
  --docker-username=AWS \
  --docker-password="${TOKEN}" \
  --docker-email="${EMAIL}"
-```
+</pre>
+</p>
+</details>
+
+<details>
+<summary>Hint for Google Container Registry (GCR) users</summary>
+<p>
+See <a href="http://docs.heptio.com/content/private-registries/pr-gcr.html">here</a> for creating the credential.
+</p>
+</details>
 
 You can specify the registry credential via `spec.registry.secretRef.name`.
 
@@ -334,13 +367,18 @@ spec:
 
 #### Google Cloud Container Builder plugin
 
-You need to create a Google Cloud service account JSON with "Project Editor" role ([?](https://cloudplatform.googleblog.com/2018/03/automatic-serverless-deployments-with-Cloud-Source-Repositories-and-Container-Builder.html)) in https://console.cloud.google.com/iam-admin/serviceaccounts , and create a Kubernetes secret as follows:
+You need to create a Google Cloud service account JSON with the following IAM roles in https://console.cloud.google.com/iam-admin/serviceaccounts :
 
-<!-- TODO: find narrower Google Cloud role? -->
+ * `Cloud Container Builder Editor`
+ * `Project Viewer`
+ * `Storage Admin`
+
+And create a corresponding Kubernetes secret that contains `json` as follows:
 
 ```console
 $ kubectl create secret generic my-gcb --from-file=json=my-gcb-service-account.json
 ```
+
 You don't need to use GKE (of course you can use though).
 
 Example manifest:
