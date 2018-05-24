@@ -26,6 +26,9 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // BuildJob is a specification for a BuildJob resource
+//
+// NOTE: Kubernetes does not require `yaml:"fooBar"` struct tags for YAML manifests.
+// However, to support embedding CBI BuildJob to other projects, the yaml tags are used.
 type BuildJob struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -55,7 +58,7 @@ type BuildJobSpec struct {
 	// that satisfies both its default logic and PluginSelector.
 	//
 	// +optional
-	PluginSelector string `json:"pluginSelector"`
+	PluginSelector string `json:"pluginSelector" yaml:"pluginSelector"`
 }
 
 // Registry specifies the registry.
@@ -74,7 +77,7 @@ type Registry struct {
 	Push bool `json:"push"`
 	// SecretRef used for pushing and pulling.
 	// +optional
-	SecretRef corev1.LocalObjectReference `json:"secretRef"`
+	SecretRef corev1.LocalObjectReference `json:"secretRef" yaml:"secretRef"`
 }
 
 type LanguageKind string
@@ -105,7 +108,7 @@ type Dockerfile struct {
 // S2I-specific fields
 type S2I struct {
 	// S2I-specific base image. e,g, centos/ruby-22-centos7
-	BaseImage string `json:"baseImage"`
+	BaseImage string `json:"baseImage" yaml:"baseImage"`
 }
 
 // Cloudbuild-specific fields
@@ -118,7 +121,7 @@ type ContextKind string
 type Context struct {
 	Kind         ContextKind                 `json:"kind"`
 	Git          Git                         `json:"git"`
-	ConfigMapRef corev1.LocalObjectReference `json:"configMapRef"`
+	ConfigMapRef corev1.LocalObjectReference `json:"configMapRef" yaml:"configMapRef"`
 	HTTP         HTTP                        `json:"http"`
 	Rclone       Rclone                      `json:"rclone"`
 }
@@ -160,10 +163,10 @@ type Git struct {
 	Revision string `json:"revision"`
 	// SubPath within the repo.
 	// +optinal
-	SubPath string `json:"subPath"`
+	SubPath string `json:"subPath" yaml:"subPath"`
 	// SSHSecretRef contains the contents of ~/.ssh.
 	// +optional
-	SSHSecretRef corev1.LocalObjectReference `json:"sshSecretRef"`
+	SSHSecretRef corev1.LocalObjectReference `json:"sshSecretRef" yaml:"sshSecretRef"`
 }
 
 // HTTP
@@ -177,7 +180,7 @@ type HTTP struct {
 	//
 	// SubPath within the archive.
 	// +optinal
-	SubPath string `json:"subPath"`
+	SubPath string `json:"subPath" yaml:"subPath"`
 }
 
 // Rclone
@@ -185,11 +188,11 @@ type Rclone struct {
 	Remote string
 	Path   string
 	// SecretRef contains the contents of ~/.config/rclone.
-	SecretRef corev1.LocalObjectReference `json:"secretRef"`
+	SecretRef corev1.LocalObjectReference `json:"secretRef" yaml:"secretRef"`
 	// SSHSecretRef contains the contents of ~/.ssh.OLD.
 	// Only required for SFTP remote.
 	// +optional
-	SSHSecretRef corev1.LocalObjectReference `json:"sshSecretRef"`
+	SSHSecretRef corev1.LocalObjectReference `json:"sshSecretRef" yaml:"sshSecretRef"`
 }
 
 // BuildJobStatus is the status for a BuildJob resource
