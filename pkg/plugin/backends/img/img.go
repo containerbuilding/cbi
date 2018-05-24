@@ -19,6 +19,7 @@ package img
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -39,8 +40,8 @@ var _ base.Backend = &Img{}
 func (b *Img) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
 	res := &pluginapi.InfoResponse{
 		Labels: map[string]string{
-			pluginapi.LPluginName:         "img",
-			pluginapi.LLanguageDockerfile: "",
+			pluginapi.LPluginName:                           "img",
+			pluginapi.LLanguage(crd.LanguageKindDockerfile): "",
 		},
 	}
 	for k, v := range cbipluginhelper.Labels {
@@ -93,7 +94,10 @@ func (b *Img) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 }
 
 func (b *Img) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
+	switch k := strings.ToLower(string(buildJob.Spec.Language.Kind)); k {
+	case strings.ToLower(string(crd.LanguageKindDockerfile)):
+		// NOP
+	default:
 		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
 	}
 	podSpec := b.commonPodSpec(buildJob)

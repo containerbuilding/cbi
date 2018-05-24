@@ -56,7 +56,7 @@ Plugin    |Backend                                                              
 `buildah` |[Buildah](https://github.com/projectatomic/buildah)                            |Yes ✅    |                 |             |
 `kaniko`  |[kaniko](https://github.com/GoogleCloudPlatform/kaniko)                        |Yes ✅    |                 |             |
 `img`     |[img](https://github.com/genuinetools/img)                                     |Yes ✅    |                 |             |
-`gcb`     |[Google Cloud Container Builder](https://cloud.google.com/container-builder/)  |Yes ✅    |Planned          |             |
+`gcb`     |[Google Cloud Container Builder](https://cloud.google.com/container-builder/)  |Yes ✅    |Yes ✅           |             |
 `s2i`     |[OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image)|          |                 |Yes ✅       |
 
 * Planned plugins (subject to change): [ACR Build](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-build-overview), [Bazel](https://github.com/bazelbuild/rules_docker), [Singularity](http://singularity.lbl.gov), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
@@ -411,6 +411,11 @@ Note:
 * `spec.registry.target` needs to be in the `gcr.io/*` or `*.gcr.io/*` namespace.
 * `spec.registry.push` needs to be `true`
 * `spec.registry.secretRef` must not be set
+
+
+In addition to Dockerfile, `gcb` plugin also supports building images from `cloudbuild.yaml`.
+
+See [`examples/ex-google-cloudbuild-push.yaml.sh`](examples/ex-google-cloudbuild-push.yaml.sh).
 
 #### Openshift Source-to-Image plugin
 

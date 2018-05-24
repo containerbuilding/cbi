@@ -19,7 +19,9 @@ package gcb
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/cyphar/filepath-securejoin"
 	corev1 "k8s.io/api/core/v1"
 
 	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
@@ -45,8 +47,9 @@ var _ base.Backend = &GCB{}
 func (b *GCB) Info(ctx context.Context, req *pluginapi.InfoRequest) (*pluginapi.InfoResponse, error) {
 	res := &pluginapi.InfoResponse{
 		Labels: map[string]string{
-			pluginapi.LPluginName:         "gcb",
-			pluginapi.LLanguageDockerfile: "",
+			pluginapi.LPluginName:                           "gcb",
+			pluginapi.LLanguage(crd.LanguageKindDockerfile): "",
+			pluginapi.LLanguage(crd.LanguageKindCloudbuild): "",
 		},
 	}
 	for k, v := range cbipluginhelper.Labels {
@@ -97,7 +100,7 @@ func (b *GCB) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 				Name:         "gcb-job",
 				Image:        b.Image,
 				Env:          []corev1.EnvVar{{Name: "CLOUDSDK_CORE_PROJECT", Value: buildJob.Annotations[AnnotationProject]}},
-				Command:      []string{"gcloud", "container", "builds", "submit", "-t", buildJob.Spec.Registry.Target},
+				Command:      []string{"gcloud", "container", "builds", "submit"},
 				VolumeMounts: []corev1.VolumeMount{rootConfigVolMount},
 			},
 		},
@@ -106,9 +109,6 @@ func (b *GCB) commonPodSpec(buildJob crd.BuildJob) corev1.PodSpec {
 }
 
 func (b *GCB) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) (*corev1.PodTemplateSpec, error) {
-	if buildJob.Spec.Language.Kind != crd.LanguageKindDockerfile {
-		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
-	}
 	if !buildJob.Spec.Registry.Push {
 		return nil, fmt.Errorf("GCB plugin requires Spec.Registry.Push to be true")
 	}
@@ -132,7 +132,21 @@ func (b *GCB) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJob) 
 	if err != nil {
 		return nil, err
 	}
-	podSpec.Containers[0].Args = append(podSpec.Containers[0].Args, ctxPath)
+	switch k := strings.ToLower(string(buildJob.Spec.Language.Kind)); k {
+	case strings.ToLower(string(crd.LanguageKindCloudbuild)):
+		if buildJob.Spec.Registry.Target != "" {
+			return nil, fmt.Errorf("Cloudbuild language requires Spec.Registry.Target to be empty")
+		}
+		yamlPath, err := securejoin.SecureJoin(ctxPath, "cloudbuild.yaml")
+		if err != nil {
+			return nil, err
+		}
+		podSpec.Containers[0].Args = append(podSpec.Containers[0].Args, []string{"--config", yamlPath, ctxPath}...)
+	case strings.ToLower(string(crd.LanguageKindDockerfile)):
+		podSpec.Containers[0].Args = append(podSpec.Containers[0].Args, []string{"-t", buildJob.Spec.Registry.Target, ctxPath}...)
+	default:
+		return nil, fmt.Errorf("unsupported Spec.Language: %v", buildJob.Spec.Language)
+	}
 	return &corev1.PodTemplateSpec{
 		Spec: podSpec,
 	}, nil

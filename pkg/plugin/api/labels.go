@@ -1,5 +1,11 @@
 package cbi_plugin_v1
 
+import (
+	"strings"
+
+	crd "github.com/containerbuilding/cbi/pkg/apis/cbi/v1alpha1"
+)
+
 var (
 	// PredefinedLabelPrefixes is the set of predefined plugin label prefixes.
 	// Although plugin labels are decoupled from k8s object labels,
@@ -23,38 +29,10 @@ const (
 	// TODO: add LPluginVersion = "v1alpha1"?
 )
 
-const (
-	// LLanguageDockerfile SHOULD be present if the plugin accepts a BuildJob
-	// with Language.Kind = LanguageKindDockerfile
-	//
-	// Value SHOULD be empty.
-	LLanguageDockerfile = "language.dockerfile"
-	// TODO: add LLanguageDockerfileMultistage = "language.dockerfile.multistage"...
-	LLanguageS2I = "language.s2i"
-)
+func LLanguage(k crd.LanguageKind) string {
+	return "language." + strings.ToLower(string(k))
+}
 
-const (
-	// LContextGit SHOULD be present if the plugin accepts a BuildJob
-	// with Context.Kind = ContextKindGit
-	//
-	// Value SHOULD be empty.
-	LContextGit = "context.git"
-
-	// LContextConfigMap SHOULD be present if the plugin accepts a BuildJob
-	// with Context.Kind = ContextKindConfigMap
-	//
-	// Value SHOULD be empty.
-	LContextConfigMap = "context.configmap"
-
-	// LContextHTTP SHOULD be present if the plugin accepts a BuildJob
-	// with Context.Kind = ContextKindHTTP
-	//
-	// Value SHOULD be empty.
-	LContextHTTP = "context.http"
-
-	// LContextRclone SHOULD be present if the plugin accepts a BuildJob
-	// with Context.Kind = ContextKindRclone
-	//
-	// Value SHOULD be empty.
-	LContextRclone = "context.rclone"
-)
+func LContext(k crd.ContextKind) string {
+	return "context." + strings.ToLower(string(k))
+}

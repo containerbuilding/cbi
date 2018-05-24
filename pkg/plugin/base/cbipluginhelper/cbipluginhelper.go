@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/cyphar/filepath-securejoin"
 	corev1 "k8s.io/api/core/v1"
@@ -95,14 +96,14 @@ type ContextInjector struct {
 
 // Inject injects a context to podSpec and returns the context path
 func (ci *ContextInjector) Inject(bjContext crd.Context) (string, error) {
-	switch k := bjContext.Kind; k {
-	case crd.ContextKindConfigMap:
+	switch k := strings.ToLower(string(bjContext.Kind)); k {
+	case strings.ToLower(string(crd.ContextKindConfigMap)):
 		return ci.injectConfigMap(bjContext.ConfigMapRef)
-	case crd.ContextKindGit:
+	case strings.ToLower(string(crd.ContextKindGit)):
 		return ci.injectGit(bjContext.Git)
-	case crd.ContextKindHTTP:
+	case strings.ToLower(string(crd.ContextKindHTTP)):
 		return ci.injectHTTP(bjContext.HTTP)
-	case crd.ContextKindRclone:
+	case strings.ToLower(string(crd.ContextKindRclone)):
 		return ci.injectRclone(bjContext.Rclone)
 	default:
 		return "", fmt.Errorf("unsupported Spec.Context: %v", k)
@@ -362,8 +363,8 @@ func (ci *ContextInjector) injectRclone(spec crd.Rclone) (string, error) {
 }
 
 var Labels = map[string]string{
-	pluginapi.LContextConfigMap: "",
-	pluginapi.LContextGit:       "",
-	pluginapi.LContextHTTP:      "",
-	pluginapi.LContextRclone:    "",
+	pluginapi.LContext(crd.ContextKindConfigMap): "",
+	pluginapi.LContext(crd.ContextKindGit):       "",
+	pluginapi.LContext(crd.ContextKindHTTP):      "",
+	pluginapi.LContext(crd.ContextKindRclone):    "",
 }
