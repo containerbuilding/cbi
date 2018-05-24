@@ -87,7 +87,11 @@ func (b *Kaniko) CreatePodTemplateSpec(ctx context.Context, buildJob crd.BuildJo
 	podSpec.Containers[0].Args = append(podSpec.Containers[0].Args, []string{
 		"--dockerfile=" + ctxPath + "/Dockerfile",
 		"--context=" + ctxPath,
+		"--destination=" + buildJob.Spec.Registry.Target,
 	}...)
+	if !buildJob.Spec.Registry.Push {
+		podSpec.Containers[0].Args = append(podSpec.Containers[0].Args, "--tarPath=/dev/null")
+	}
 	return &corev1.PodTemplateSpec{
 		Spec: podSpec,
 	}, nil
