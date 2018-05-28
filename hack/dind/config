@@ -1,7 +1,10 @@
-# https://github.com/Mirantis/kubeadm-dind-cluster/pull/112
-# FIXME: in addition to script, we also need to pin images
-DIND_CLUSTER_SH_URL=https://raw.githubusercontent.com/AkihiroSuda/kubeadm-dind-cluster/6318b70e145f54af49442865aa852f35952d7372/fixed/dind-cluster-v1.9.sh
-DIND_CLUSTER_SH=/tmp/dind-cluster-v1.9.sh
+DIND_CLUSTER_SH_URL=https://raw.githubusercontent.com/Mirantis/kubeadm-dind-cluster/e5f5062caf2431e2768385a2692077dee56db32f/dind-cluster.sh
+
+# `IMAGE_NAME=akihirosuda/kubeadm-dind-cluster:v1.9 DOCKER_TAG=v1.9 ./hooks/build` in kubeadm-dind-cluster repo, and push to Docker Hub.
+# source: https://github.com/AkihiroSuda/kubeadm-dind-cluster/tree/0f85a3f59f6f485a31b1c354561cb4a9c03bbb7c
+DIND_IMAGE=akihirosuda/kubeadm-dind-cluster:v1.9@sha256:54105bdfb8bed06d724571b5836750dbcf490db6eceb9817363d53b619911811
+LOCAL_KUBECTL_VERSION=v1.9
+DIND_CLUSTER_SH=/tmp/dind-cluster.sh
 
 # hardcoded in DIND_CLUSTER_SH
 DIND_NET=kubeadm-dind-net
