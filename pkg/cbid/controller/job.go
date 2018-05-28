@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,6 +57,10 @@ func newJob(ctx context.Context, pluginClient api.PluginClient, buildJob *cbiv1a
 		BuildJobJson: buildJobJSON,
 	}
 	specRes, err := pluginClient.Spec(ctx, specReq)
+	// TODO(AkihiroSuda): handle client connection failure properly
+	if err != nil {
+		return nil, errors.Wrap(err, "pluginClient.Spec() failed")
+	}
 	var pts corev1.PodTemplateSpec
 	if err := json.Unmarshal(specRes.PodTemplateSpecJson, &pts); err != nil {
 		return nil, err
