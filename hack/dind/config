@@ -1,6 +1,5 @@
-# https://github.com/Mirantis/kubeadm-dind-cluster/pull/112
 # FIXME: in addition to script, we also need to pin images
-DIND_CLUSTER_SH_URL=https://raw.githubusercontent.com/Mirantis/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.9.sh
+DIND_CLUSTER_SH_URL=https://raw.githubusercontent.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.9.sh
 DIND_CLUSTER_SH=/tmp/dind-cluster-v1.9.sh
 
 # hardcoded in DIND_CLUSTER_SH
