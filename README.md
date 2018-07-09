@@ -82,6 +82,10 @@ Requires Kubernetes 1.9 or later.
 $ kubectl apply -f https://raw.githubusercontent.com/containerbuilding/cbi/master/cbi-latest.yaml
 ```
 
+Everything (except `CustomResourceDefinition`, `ClusterRole`, and `ClusterRoleBinding`) will be installed to the `cbi-system` namespace.
+
+You may edit the YAML file to change the namespace or to add `NetworkPolicy`.
+
 <details>
 <summary>Hint for Google Kubernetes Engine (GKE) users</summary>
 <p>
