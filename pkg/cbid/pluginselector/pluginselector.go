@@ -32,30 +32,34 @@ type PluginSelectorFunc func(plugins []api.InfoResponse, bj crd.BuildJob) (int, 
 // FIXME: we really should have grpc.ClientConn here.
 func NewPluginSelector(fn PluginSelectorFunc, conns ...*grpc.ClientConn) *PluginSelector {
 	ps := &PluginSelector{
-		fn:         fn,
-		cachedInfo: make(map[*grpc.ClientConn]*api.InfoResponse, len(conns)),
+		fn: fn,
 	}
 	for _, conn := range conns {
-		ps.cachedInfo[conn] = nil
+		ps.cachedInfo = append(ps.cachedInfo, &cachedInfo{conn: conn})
 	}
 	return ps
 }
 
+type cachedInfo struct {
+	conn *grpc.ClientConn
+	info *api.InfoResponse
+}
+
 type PluginSelector struct {
 	fn         PluginSelectorFunc
-	cachedInfo map[*grpc.ClientConn]*api.InfoResponse
+	cachedInfo []*cachedInfo
 }
 
 func (ps *PluginSelector) UpdateCachedInfo(ctx context.Context) error {
 	var errors []error
-	for conn := range ps.cachedInfo {
-		client := api.NewPluginClient(conn)
+	for _, x := range ps.cachedInfo {
+		client := api.NewPluginClient(x.conn)
 		info, err := client.Info(ctx, &api.InfoRequest{})
 		if err != nil {
 			errors = append(errors, err)
 			info = nil
 		}
-		ps.cachedInfo[conn] = info
+		x.info = info
 	}
 	if len(errors) > 0 {
 		return fmt.Errorf("%v", errors)
@@ -69,10 +73,10 @@ func (ps *PluginSelector) Select(bj crd.BuildJob) api.PluginClient {
 		info  []api.InfoResponse
 	)
 
-	for c, i := range ps.cachedInfo {
-		if i != nil {
-			conns = append(conns, c)
-			info = append(info, *i)
+	for _, x := range ps.cachedInfo {
+		if x.info != nil {
+			conns = append(conns, x.conn)
+			info = append(info, *x.info)
 		}
 	}
 	idx, err := ps.fn(info, bj)
