@@ -28,6 +28,7 @@ import (
 	"gopkg.in/urfave/cli.v2"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	aev1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -43,6 +44,11 @@ var generateManifests = &cli.Command{
 	Usage:     "Generate Kubernetes manifests for deploying CBI.",
 	ArgsUsage: "[flags] REGISTRY TAG",
 	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "namespace",
+			Usage: "Kubernetes namespace",
+			Value: "cbi-system",
+		},
 		&cli.StringSliceFlag{
 			Name:  "plugin",
 			Usage: "Plugin names (first=highest priority, last=lowest priority)",
@@ -53,6 +59,10 @@ var generateManifests = &cli.Command{
 }
 
 func generateManifestsAction(clicontext *cli.Context) error {
+	namespace := clicontext.String("namespace")
+	if namespace == "" {
+		return errors.New("--namespace missing")
+	}
 	registry := clicontext.Args().Get(0)
 	if registry == "" {
 		return errors.New("REGISTRY missing")
@@ -67,20 +77,38 @@ func generateManifestsAction(clicontext *cli.Context) error {
 
 	var (
 		manifests      []*Manifest
+		crds           []*aev1.CustomResourceDefinition
+		clusterRole    *rbacv1.ClusterRole
 		serviceAccount *corev1.ServiceAccount
 		pluginServices []*corev1.Service
 	)
 	manifestGenerators := []func() (*Manifest, error){
-		GenerateCRD,
 		func() (*Manifest, error) {
-			o, e := GenerateServiceAccount()
+			return GenerateNamespace(namespace)
+		},
+		func() (*Manifest, error) {
+			o, e := GenerateCRD()
+			if e == nil {
+				crds = append(crds, o.Object.(*aev1.CustomResourceDefinition))
+			}
+			return o, e
+		},
+		func() (*Manifest, error) {
+			o, e := GenerateServiceAccount(namespace)
 			if e == nil {
 				serviceAccount = o.Object.(*corev1.ServiceAccount)
 			}
 			return o, e
 		},
 		func() (*Manifest, error) {
-			return GenerateClusterRoleBinding(serviceAccount)
+			o, e := GenerateClusterRole(crds)
+			if e == nil {
+				clusterRole = o.Object.(*rbacv1.ClusterRole)
+			}
+			return o, e
+		},
+		func() (*Manifest, error) {
+			return GenerateClusterRoleBinding(clusterRole, serviceAccount)
 		},
 	}
 	for _, f := range clicontext.StringSlice("plugin") {
@@ -100,7 +128,7 @@ func generateManifestsAction(clicontext *cli.Context) error {
 			)
 			manifestGenerators = append(manifestGenerators,
 				func() (*Manifest, error) {
-					o, e := GenerateBuildKitDaemonDeployment(buildkitImage)
+					o, e := GenerateBuildKitDaemonDeployment(namespace, buildkitImage)
 					if e == nil {
 						buildkitdDepl = o.Object.(*appsv1.Deployment)
 					}
@@ -118,8 +146,9 @@ func generateManifestsAction(clicontext *cli.Context) error {
 			args = func() []string {
 				return []string{
 					"-buildctl-image=" + buildkitImage,
-					fmt.Sprintf("-buildkitd-addr=tcp://%s:%d",
+					fmt.Sprintf("-buildkitd-addr=tcp://%s.%s.svc.cluster.local:%d",
 						buildkitdSvc.ObjectMeta.Name,
+						namespace,
 						buildkitdSvc.Spec.Ports[0].Port)}
 			}
 		case "buildah":
@@ -148,7 +177,7 @@ func generateManifestsAction(clicontext *cli.Context) error {
 		var depl *appsv1.Deployment
 		manifestGenerators = append(manifestGenerators,
 			func() (*Manifest, error) {
-				o, e := GeneratePluginDeployment(p, registry, tag, args())
+				o, e := GeneratePluginDeployment(namespace, p, registry, tag, args())
 				if e == nil {
 					depl = o.Object.(*appsv1.Deployment)
 				}
@@ -165,7 +194,7 @@ func generateManifestsAction(clicontext *cli.Context) error {
 	}
 	manifestGenerators = append(manifestGenerators,
 		func() (*Manifest, error) {
-			return GenerateCBIDDeployment(registry, tag, serviceAccount.ObjectMeta.Name, pluginServices)
+			return GenerateCBIDDeployment(namespace, registry, tag, serviceAccount.ObjectMeta.Name, pluginServices)
 		})
 	for _, f := range manifestGenerators {
 		m, err := f()
@@ -175,6 +204,22 @@ func generateManifestsAction(clicontext *cli.Context) error {
 		manifests = append(manifests, m)
 	}
 	return WriteManifests(os.Stdout, manifests)
+}
+
+func GenerateNamespace(namespace string) (*Manifest, error) {
+	o := corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "Namespace",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+		},
+	}
+	return &Manifest{
+		Description: "Namespace",
+		Object:      &o,
+	}, nil
 }
 
 func GenerateCRD() (*Manifest, error) {
@@ -203,7 +248,7 @@ func GenerateCRD() (*Manifest, error) {
 	}, nil
 }
 
-func GenerateServiceAccount() (*Manifest, error) {
+func GenerateServiceAccount(namespace string) (*Manifest, error) {
 	o := corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
@@ -211,7 +256,7 @@ func GenerateServiceAccount() (*Manifest, error) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cbi",
-			Namespace: metav1.NamespaceDefault,
+			Namespace: namespace,
 		},
 	}
 	return &Manifest{
@@ -220,7 +265,38 @@ func GenerateServiceAccount() (*Manifest, error) {
 	}, nil
 }
 
-func GenerateClusterRoleBinding(sa *corev1.ServiceAccount) (*Manifest, error) {
+func GenerateClusterRole(roCRDs []*aev1.CustomResourceDefinition) (*Manifest, error) {
+	o := rbacv1.ClusterRole{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: rbacv1.SchemeGroupVersion.String(),
+			Kind:       "ClusterRole",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cbi",
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{batchv1.GroupName},
+				Resources: []string{"jobs"},
+				Verbs:     []string{rbacv1.VerbAll},
+			},
+		},
+	}
+	for _, x := range roCRDs {
+		rule := rbacv1.PolicyRule{
+			APIGroups: []string{x.Spec.Group},
+			Resources: []string{x.Spec.Names.Plural},
+			Verbs:     []string{"get", "list", "watch"},
+		}
+		o.Rules = append(o.Rules, rule)
+	}
+	return &Manifest{
+		Description: "ClusterRole used by CBI controller daemon",
+		Object:      &o,
+	}, nil
+}
+
+func GenerateClusterRoleBinding(cr *rbacv1.ClusterRole, sa *corev1.ServiceAccount) (*Manifest, error) {
 	o := rbacv1.ClusterRoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -239,17 +315,16 @@ func GenerateClusterRoleBinding(sa *corev1.ServiceAccount) (*Manifest, error) {
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.GroupName,
 			Kind:     "ClusterRole",
-			// FIXME
-			Name: "cluster-admin",
+			Name:     cr.ObjectMeta.Name,
 		},
 	}
 	return &Manifest{
-		Description: "ClusterRoleBinding for binding a role to the service account. (FIXME: cluster-admin)",
+		Description: "ClusterRoleBinding for binding the role to the service account.",
 		Object:      &o,
 	}, nil
 }
 
-func GeneratePluginDeployment(pluginName, registry, tag string, args []string) (*Manifest, error) {
+func GeneratePluginDeployment(namespace, pluginName, registry, tag string, args []string) (*Manifest, error) {
 	labels := map[string]string{
 		"app": "cbi-" + pluginName,
 	}
@@ -265,8 +340,9 @@ func GeneratePluginDeployment(pluginName, registry, tag string, args []string) (
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
-			Labels: labels,
+			Name:      name,
+			Namespace: namespace,
+			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -309,8 +385,9 @@ func GenerateService(depl *appsv1.Deployment) (*Manifest, error) {
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   depl.ObjectMeta.Name,
-			Labels: depl.ObjectMeta.Labels,
+			Name:      depl.ObjectMeta.Name,
+			Namespace: depl.ObjectMeta.Namespace,
+			Labels:    depl.ObjectMeta.Labels,
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -328,7 +405,7 @@ func GenerateService(depl *appsv1.Deployment) (*Manifest, error) {
 	}, nil
 }
 
-func GenerateBuildKitDaemonDeployment(imageWithTag string) (*Manifest, error) {
+func GenerateBuildKitDaemonDeployment(namespace, imageWithTag string) (*Manifest, error) {
 	labels := map[string]string{
 		"app": "cbi-buildkit-buildkitd",
 	}
@@ -341,8 +418,9 @@ func GenerateBuildKitDaemonDeployment(imageWithTag string) (*Manifest, error) {
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
-			Labels: labels,
+			Name:      name,
+			Namespace: namespace,
+			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -382,7 +460,7 @@ func GenerateBuildKitDaemonDeployment(imageWithTag string) (*Manifest, error) {
 	}, nil
 }
 
-func GenerateCBIDDeployment(registry, tag, serviceAccountName string, pluginServices []*corev1.Service) (*Manifest, error) {
+func GenerateCBIDDeployment(namespace, registry, tag, serviceAccountName string, pluginServices []*corev1.Service) (*Manifest, error) {
 	labels := map[string]string{
 		"app": "cbid",
 	}
@@ -397,8 +475,9 @@ func GenerateCBIDDeployment(registry, tag, serviceAccountName string, pluginServ
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
-			Labels: labels,
+			Name:      name,
+			Namespace: namespace,
+			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
