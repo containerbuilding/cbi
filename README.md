@@ -1,7 +1,7 @@
 # CBI: Container Builder Interface for Kubernetes
 
 CBI provides a vendor-neutral interface for building (and pushing) container images on top of a Kubernetes cluster,
-with support for several backends such as [Docker](https://www.docker.com), [BuildKit](https://github.com/moby/buildkit), [Buildah](https://github.com/projectatomic/buildah), [kaniko](https://github.com/GoogleCloudPlatform/kaniko), [img](https://github.com/genuinetools/img), [Google Cloud Container Builder](https://cloud.google.com/container-builder/), and [OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image).
+with support for several backends such as [Docker](https://www.docker.com), [BuildKit](https://github.com/moby/buildkit), [Buildah](https://github.com/projectatomic/buildah), [kaniko](https://github.com/GoogleCloudPlatform/kaniko), [img](https://github.com/genuinetools/img), [Google Cloud Container Builder](https://cloud.google.com/container-builder/), [Azure Container Registry Build](https://azure.microsoft.com/services/container-registry/) and [OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image).
 
 ![cbi.png](./docs/cbi.png)
 
@@ -23,6 +23,7 @@ with support for several backends such as [Docker](https://www.docker.com), [Bui
    - [Plugin](#plugin)
      - [Specify the plugin explicitly](#specify-the-plugin-explicitly)
      - [Google Cloud Container Builder plugin](#google-cloud-container-builder-plugin)
+     - [Azure Container Registry Build plugin](#azure-container-registry-build-plugin)
      - [Openshift Source-to-Image plugin](#openshift-source-to-image-plugin)
  - [Design (subject to change)](#design-subject-to-change)
    - [Components](#components)
@@ -49,17 +50,18 @@ with support for several backends such as [Docker](https://www.docker.com), [Bui
 
 * Plugins (all of them are pre-alpha):
 
-Plugin    |Backend                                                                        |Dockerfile|`cloudbuild.yaml`|OpenShift S2I|BuildKit LLB
-----------|-------------------------------------------------------------------------------|----------|-----------------|-------------|------------
-`docker`  |[Docker](https://www.docker.com)                                               |Yes ✅    |                 |             |
-`buildkit`|[BuildKit](https://github.com/moby/buildkit)                                   |Yes ✅    |                 |             |Planned
-`buildah` |[Buildah](https://github.com/projectatomic/buildah)                            |Yes ✅    |                 |             |
-`kaniko`  |[kaniko](https://github.com/GoogleCloudPlatform/kaniko)                        |Yes ✅    |                 |             |
-`img`     |[img](https://github.com/genuinetools/img)                                     |Yes ✅    |                 |             |
-`gcb`     |[Google Cloud Container Builder](https://cloud.google.com/container-builder/)  |Yes ✅    |Yes ✅           |             |
-`s2i`     |[OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image)|          |                 |Yes ✅       |
+Plugin    |Backend                                                                                   |Dockerfile|`cloudbuild.yaml`|OpenShift S2I|BuildKit LLB|ACB Pipeline
+----------|------------------------------------------------------------------------------------------|----------|-----------------|-------------|------------|
+`docker`  |[Docker](https://www.docker.com)                                                          |Yes ✅    |                 |             |            |
+`buildkit`|[BuildKit](https://github.com/moby/buildkit)                                              |Yes ✅    |                 |             |Planned     |
+`buildah` |[Buildah](https://github.com/projectatomic/buildah)                                       |Yes ✅    |                 |             |            |
+`kaniko`  |[kaniko](https://github.com/GoogleCloudPlatform/kaniko)                                   |Yes ✅    |                 |             |            |
+`img`     |[img](https://github.com/genuinetools/img)                                                |Yes ✅    |                 |             |            |
+`gcb`     |[Google Cloud Container Builder](https://cloud.google.com/container-builder/)             |Yes ✅    |Yes ✅           |             |            |
+`acb`     |[Azure Container Registry Build](https://azure.microsoft.com/services/container-registry/)|Yes ✅    |                 |             |Planned     |Planned
+`s2i`     |[OpenShift Source-to-Image (S2I)](https://github.com/openshift/source-to-image)           |          |                 |Yes ✅       |            |
 
-* Planned plugins (subject to change): [ACR Build](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-build-overview), [Bazel](https://github.com/bazelbuild/rules_docker), [Singularity](http://singularity.lbl.gov), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
+* Planned plugins (subject to change): [Bazel](https://github.com/bazelbuild/rules_docker), [Singularity](http://singularity.lbl.gov), [OpenShift Image Builder](https://github.com/openshift/imagebuilder), [Orca](https://github.com/cyphar/orca-build), ...
 
 
 * Context providers (available for all plugins)
@@ -117,6 +119,7 @@ Plugin    | Requirements
 `kaniko`  | None (Google Cloud is not needed)
 `img`     | Privileged containers needs to be enabled (See [`kubernetes/community#1934`](https://github.com/kubernetes/community/pull/1934) and [Jess's blog](https://blog.jessfraz.com/post/building-container-images-securely-on-kubernetes/) for the ongoing work to remove this requirement)
 `gcb`     | Requires Google Cloud service account with IAM roles, see [this section](#google-cloud-container-builder-plugin) (Your cluster does not need to be GKE or on GCE)
+`acb`     | Requires Azure service principal with IAM roles, see [this section](#azure-container-registry-build-plugin) (Your cluster does not need to be AKS or on Azure VMs)
 `s2i`     | Docker needs to be installed on the hosts (OpenShift is not needed)
 
 The default plugin is `docker`.
@@ -186,6 +189,13 @@ See <a href="http://docs.heptio.com/content/private-registries/pr-gcr.html">here
 </p>
 </details>
 
+<details>
+<summary>Hint for Azure Container Registry (ACR) users</summary>
+<p>
+See <a href="https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal">here</a> for creating the credential.
+</p>
+</details>
+
 You can specify the registry credential via `spec.registry.secretRef.name`.
 
 Example manifest:
@@ -210,6 +220,8 @@ spec:
 ```
 
 Note: for Google Cloud Container Builder plugin, please refer to the [Google Cloud Container Builder plugin](#google-cloud-container-builder-plugin) section.
+
+Note: for Azure Container Registry Build plugin, please refer to the [Azure Container Registry Build plugin](#azure-container-registry-build-plugin) section.
 
 ### Build contexts
 
@@ -420,6 +432,64 @@ Note:
 In addition to Dockerfile, `gcb` plugin also supports building images from `cloudbuild.yaml`.
 
 See [`examples/ex-google-cloudbuild-push.yaml.sh`](examples/ex-google-cloudbuild-push.yaml.sh).
+
+#### Azure Container Registry Build plugin
+
+You need to [create a Azure service principal with a PEM/DER cert](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli):
+
+```console
+$ az ad sp create-for-rbac --name ServicePrincipalName --create-cert
+{
+  "appId": "...",
+  "displayName": "..."",
+  "fileWithCertAndPrivateKey": "my-acb.pem",
+  "name": "http://...",
+  "password": null,
+  "tenant": "..."
+}
+```
+
+And create a corresponding Kubernetes secret that contains `cert` as follows:
+
+```console
+$ kubectl create secret generic my-acb --from-file=cert=my-acb.pem
+```
+
+You don't need to use AKS (of course you can use though).
+
+Example manifest:
+
+```yaml
+apiVersion: cbi.containerbuilding.github.io/v1alpha1
+kind: BuildJob
+metadata:
+  name: ex-git-push
+  annotations:
+    cbi-acb/secret: my-acb
+    cbi-acb/app-id: APP_ID
+    cbi-acb/tenant: TENANT
+spec:
+  registry:
+    target: example.azurecr.io/example/foo
+    push: true
+  language:
+    kind: Dockerfile
+  context:
+    kind: Git
+    git:
+      url: https://git.example.com/foo/bar.git
+  pluginSelector: plugin.name=acb
+```
+
+Note:
+
+* `metadata.annotations["cbi-acb/secret"]` needs to be set to the name of the secret
+* `metadata.annotations["cbi-acb/app-id"]` needs to be set to the App ID.
+* `metadata.annotations["cbi-acb/tenant"]` needs to be set to the tenant ID.
+* `spec.registry.target` needs to be in the  `*.azurecr.io/*` namespace.
+* `spec.registry.secretRef` must not be set
+* To prevent the password from being leaked via the `az login` command line strings in Kubernetes Job objects, we don't support password-based authentication for the service principal.
+  You may need to create an additional password-based service principal for `ImagePullSecret`. See [here](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal).
 
 #### Openshift Source-to-Image plugin
 
