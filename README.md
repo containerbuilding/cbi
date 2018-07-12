@@ -51,7 +51,7 @@ with support for several backends such as [Docker](https://www.docker.com), [Bui
 * Plugins (all of them are pre-alpha):
 
 Plugin    |Backend                                                                                   |Dockerfile|`cloudbuild.yaml`|OpenShift S2I|BuildKit LLB|ACB Pipeline
-----------|------------------------------------------------------------------------------------------|----------|-----------------|-------------|------------|
+----------|------------------------------------------------------------------------------------------|----------|-----------------|-------------|------------|------------
 `docker`  |[Docker](https://www.docker.com)                                                          |Yes ✅    |                 |             |            |
 `buildkit`|[BuildKit](https://github.com/moby/buildkit)                                              |Yes ✅    |                 |             |Planned     |
 `buildah` |[Buildah](https://github.com/projectatomic/buildah)                                       |Yes ✅    |                 |             |            |
