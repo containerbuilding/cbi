@@ -52,7 +52,7 @@ var generateManifests = &cli.Command{
 		&cli.StringSliceFlag{
 			Name:  "plugin",
 			Usage: "Plugin names (first=highest priority, last=lowest priority)",
-			Value: cli.NewStringSlice("docker", "buildkit", "buildah", "kaniko", "img", "gcb", "s2i"),
+			Value: cli.NewStringSlice("docker", "buildkit", "buildah", "kaniko", "img", "gcb", "acb", "s2i"),
 		},
 	},
 	Action: generateManifestsAction,
@@ -166,6 +166,10 @@ func generateManifestsAction(clicontext *cli.Context) error {
 		case "gcb":
 			args = func() []string {
 				return []string{"-gcloud-image=google/cloud-sdk:alpine"}
+			}
+		case "acb":
+			args = func() []string {
+				return []string{"-az-image=microsoft/azure-cli:latest"}
 			}
 		case "s2i":
 			args = func() []string {
