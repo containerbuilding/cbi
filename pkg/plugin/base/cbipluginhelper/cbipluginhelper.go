@@ -194,7 +194,7 @@ func (ci *ContextInjector) injectGit(spec crd.Git) (string, error) {
 	initContainer := corev1.Container{
 		Name:  initContainerName,
 		Image: ci.Helper.Image,
-		Args:  []string{"populate-git", spec.URL, contextPath, "--revision", spec.Revision},
+		Args:  []string{"populate-git", "--revision", spec.Revision, spec.URL, contextPath},
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      volName,
