@@ -1,3 +1,7 @@
+# :warning: CBI is no longer under active development, in favor of [Tekton](https://tekton.dev/).  See [`tektoncd/pipeline`](https://github.com/tektoncd/pipeline) and [`tektoncd/catalog`](https://github.com/tektoncd/catalog).
+
+---
+
 # CBI: Container Builder Interface for Kubernetes
 
 CBI provides a vendor-neutral interface for building (and pushing) container images on top of a Kubernetes cluster,
